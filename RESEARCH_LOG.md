@@ -102,3 +102,55 @@ experiment.
 
 Whether deterministic observations can be converted into rare, truthful bark
 events.
+
+## 2026-08-18 — Frame Research Experiment R1
+
+### Research question
+
+Can deterministic observations, compared only across exactly comparable source
+checks, be converted into rare and truthful bark events without turning a
+failed, incomplete, blocked, malformed, timed-out, or unverifiable check into
+“not found” or disappearance?
+
+### Result
+
+R1 has been framed in `RESEARCH_001_BARK_SCHEMA.md` but has not been run. The
+document proposes terminology, schemas, comparability rules, material-change
+rules, baseline behaviour, synthetic scenarios, falsification conditions,
+stopping conditions, and unresolved decisions.
+
+The schemas and rules are provisional. No application code, tests, fixtures,
+databases, dependencies, adapters, network calls, notifications, or research
+results were created by this framing step.
+
+### Decision boundary
+
+Stop for explicit approval before implementing or running R1. The recorded
+Base Zero history and accepted decisions remain unchanged; this entry records
+only that the experiment has been framed.
+
+### Consistency review
+
+A read-only review found four material framing gaps and resolved them
+provisionally without running R1:
+
+- comparability now requires exact agreement on `subject_ref`, `source_id`,
+  `canonical_scope`, `adapter_id`, `adapter_version`, `schema_version`, and
+  `normalization_version`; `contract_version` is not a substitute;
+- timestamps, durations, retry counts, diagnostic text, and `reason_codes` are
+  diagnostic metadata, not observation materiality; status transitions may
+  produce non-exposure status guards;
+- list semantics now distinguish unique sorted sets, observations sorted by
+  `finding_key`, operational execution order, and ordered material list values;
+  and
+- failed or unverifiable checks contribute no accepted observations, while
+  aggregate `completed`, `incomplete`, `failed`, and invalid `empty_scope`
+  outcomes are defined explicitly.
+
+The review also confirmed that the R1 document remains framed, not run, and
+all schema choices remain provisional.
+
+### Next question
+
+Will the proposed deterministic schema survive the required synthetic
+scenarios without false bark events or hidden non-comparability?

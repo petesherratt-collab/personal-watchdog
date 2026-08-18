@@ -101,3 +101,25 @@ that the underlying research question has been answered.
   persistence or live integration.
 - **Evidence that could change it:** A decision to narrow or replace the
   project's research objective.
+
+## 2026-08-18 — Keep R1 schema choices provisional
+
+- **Status:** accepted
+- **Context:** `RESEARCH_001_BARK_SCHEMA.md` frames the next experiment but has
+  not been run.
+- **Decision:** Do not treat any R1 schema, comparability rule, material-change
+  rule, baseline rule, bark rule, or unresolved choice as an accepted design
+  decision. They remain provisional until an approved experiment produces
+  evidence and a later decision explicitly accepts them.
+- **Reasoning:** Framing a research experiment must not be mistaken for a
+  research result or a settled product specification.
+- **Evidence that could change it:** An approved R1 run and an explicit,
+  evidence-backed decision record.
+
+The following are provisional R1 framing resolutions, not accepted schema
+decisions: comparability matches `subject_ref`, `source_id`,
+`canonical_scope`, `adapter_id`, `adapter_version`, `schema_version`, and
+`normalization_version`; diagnostic metadata is excluded from observation
+fingerprints; list semantics are declared per field; failed or unverifiable
+checks contribute no accepted observations; and aggregate outcomes are
+`completed`, `incomplete`, `failed`, or invalid `empty_scope` as defined in R1.

@@ -247,3 +247,79 @@ watchdog base zero`. The final commit hash is reported in the handoff.
 
 Whether deterministic observations can be converted into rare, truthful bark
 events.
+
+## 2026-08-18 — Frame Research Experiment R1
+
+### Objective
+
+Frame the smallest proposed experiment for deciding whether deterministic
+observations can become rare, truthful bark events, without implementing or
+running it.
+
+### Changes
+
+Created `RESEARCH_001_BARK_SCHEMA.md` with the research question, hypotheses,
+scope, exclusions, proposed terminology and schemas, exact comparability and
+material-change rules, baseline behaviour, synthetic scenarios, falsification
+and stopping conditions, unresolved decisions, and the approval boundary.
+
+Appended to `RESEARCH_LOG.md` that R1 is framed but not run. Added only the
+accepted meta-decision in `DECISIONS.md` that all R1 schema choices remain
+provisional. No application code, tests, fixtures, databases, dependencies,
+adapters, network calls, or notifications were added.
+
+### Verification
+
+- `.venv/bin/python -m pytest` — 3 passed.
+- `.venv/bin/ruff format --check .` — 14 files already formatted.
+- `.venv/bin/ruff check .` — all checks passed.
+- `.venv/bin/mypy .` — success, no issues found in 1 source file.
+- `git diff --check` — passed.
+
+### Decisions
+
+The R1 framing is not a research result and does not authorize implementation.
+All R1 schema choices remain provisional. Approval is required before running
+or implementing the experiment.
+
+### Gotchas
+
+The word “schema” can make a proposed research model look like an accepted
+database or product contract. It was therefore kept explicitly in Markdown,
+with no code, fixtures, database, or persistence layer. This is contained by
+marking every R1 design choice provisional and requiring approval before a
+run; the risk remains that a future reader may still confuse framing with
+validation.
+
+#### Consistency review and provisional resolutions
+
+- **Observed:** The first R1 framing lacked explicit adapter and schema-version
+  comparability fields, did not fully separate diagnostic metadata, used a
+  broad ordering statement, and left partial unverifiable candidates and
+  aggregate outcomes under-specified.
+- **Why surprising or dangerous:** Those gaps could allow two different source
+  or schema contracts to compare, turn a status diagnostic into an exposure
+  bark, silently reorder material lists, or let partial candidates support a
+  false baseline or disappearance claim.
+- **Diagnosis:** A read-only twelve-point review compared the R1 terminology,
+  examples, rules, scenarios, and records against the required invariants.
+- **Resolution or containment:** The provisional R1 framing now requires exact
+  subject/source/scope/adapter/adapter-version/schema/normalization agreement,
+  excludes diagnostic metadata from observation fingerprints, declares list
+  semantics per field, retains only bounded diagnostics for failed or
+  unverifiable checks, and defines aggregate `completed`, `incomplete`,
+  `failed`, and invalid `empty_scope` outcomes. Status guards are explicitly
+  non-exposure events.
+- **Open risk:** R1 has not run; the proposed rules may still fail against
+  synthetic scenarios and remain unaccepted design choices.
+
+### Repository state
+
+Before this entry: branch `main` at `0bd3f08`, clean after the Base Zero
+documentation commit. This R1 framing is deliberately unstaged and uncommitted
+pending review and explicit approval.
+
+### Next question
+
+Will the proposed deterministic schema survive the required synthetic
+scenarios without false bark events or hidden non-comparability?
