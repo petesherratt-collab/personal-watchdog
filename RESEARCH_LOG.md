@@ -189,3 +189,75 @@ has occurred and no schema choice has become accepted research evidence.
 
 Can the clarified deterministic in-memory model pass the required synthetic
 transitions without false exposure barks or hidden non-comparability?
+
+## 2026-08-18 — Execute Research Experiment R1
+
+### Research question
+
+Can deterministic synthetic observations be classified into truthful bark or
+silence events without treating failure, uncertainty, incompatible scope, or
+diagnostic variation as exposure change?
+
+### Scope
+
+Implement only immutable in-memory R1 records, source-contract canonicalization
+for declared set-like fields, a pure comparator, synthetic fixtures, and tests.
+Do not add a CLI, persistence, network access, live adapter, notification,
+hashing, evidence capture, risk scoring, or product reporting.
+
+### Observations
+
+- A first completed source check creates a per-source baseline and remains
+  silent, including when it has zero or more synthetic observations.
+- Equal material observations remain `unchanged`; new, changed, and
+  disappeared findings produce the corresponding derived exposure events.
+- Timestamp, duration, retry count, diagnostic text, reason-code, and context
+  changes do not enter observation fingerprints or produce exposure events.
+- Failed and unverifiable current checks produce `not_comparable` with
+  explicit reasons and separate `guarding_failed` or
+  `guarding_unverifiable` events, including without a prior baseline. They
+  produce no disappearance or exposure event.
+- Completed sources in an aggregate `incomplete` scan remain independently
+  comparable. Failed or unverifiable candidates cannot enter observations,
+  baselines, or comparisons.
+- Exact subject, source, scope, adapter, adapter-version, schema-version, and
+  normalization-version mismatches remain non-comparable.
+- Declared set-like fields canonicalize deterministically; ordered observation
+  lists remain material. Empty declared scope is rejected before a scan exists.
+- Source output order is deterministic and does not depend on input collection
+  order.
+
+### Result
+
+The synthetic R1 implementation passed all specified transitions. The result
+supports a bounded claim about this in-memory model: within the declared
+synthetic source contract, comparison classification, comparison reasons,
+derived exposure events, and derived guarding events can remain separate and
+deterministic without converting failure or uncertainty into disappearance.
+
+### Verification
+
+- `.venv/bin/python -m pytest` — 29 passed.
+- `.venv/bin/ruff format --check .` — 19 files already formatted.
+- `.venv/bin/ruff check .` — all checks passed.
+- `.venv/bin/mypy .` — success, no issues found in 6 source files.
+- `git diff --check` — passed.
+- A scope review found no runtime network, persistence, hashing, live adapter,
+  notification, evidence, risk, or severity implementation.
+
+### What R1 does not establish
+
+R1 does not establish source coverage, source truth, identity ownership,
+comprehensive exposure detection, useful alert frequency, risk or danger,
+live integration behaviour, persistence semantics, or notification policy. It
+uses synthetic identifiers and a synthetic source contract only.
+
+### Decision boundary
+
+The observed result does not promote the provisional R1 schemas or bark rules
+to an accepted product design. No further experiment begins in this entry.
+
+### Next question
+
+What, if anything, should be separately approved after reviewing this bounded
+offline result?

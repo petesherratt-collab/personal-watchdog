@@ -388,3 +388,107 @@ as `docs: clarify R1 guard event semantics`.
 
 Can the clarified deterministic in-memory model pass the required synthetic
 transitions without false exposure barks or hidden non-comparability?
+
+## 2026-08-18 — Execute R1 truthful bark experiment
+
+### Objective
+
+Run the approved, clarified R1 experiment offline to test whether deterministic
+synthetic observations can yield truthful comparison and bark outcomes without
+turning failure, uncertainty, incompatible scope, or diagnostic variation into
+exposure change.
+
+### Changes
+
+**Directly verified:** Added the `personal_watchdog` package containing frozen
+in-memory records for source identities, non-empty scan plans, diagnostic
+metadata, observations, terminal source checks, aggregate scan attempts,
+comparison results, exposure events, guarding events, and reports. Added
+contract-declared material fields and set-like fields, deterministic
+canonicalization, construction-time rejection of invalid scope/status
+combinations, and the pure `compare_scans` function.
+
+**Directly verified:** Added synthetic-only fixtures and 26 R1 tests in
+`tests/test_r1.py`; the existing three Milestone 0 policy tests remain
+unchanged. No CLI, persistence, database, dependency, adapter, network call,
+notification, evidence capture, hashing, encryption, background service, GUI,
+report, risk score, or severity score was added.
+
+### Verification
+
+**Directly verified:**
+
+- `.venv/bin/python -m pytest` — 29 passed.
+- `.venv/bin/ruff format --check .` — 19 files already formatted.
+- `.venv/bin/ruff check .` — all checks passed.
+- `.venv/bin/mypy .` — success, no issues found in 6 source files.
+- `git diff --check` — passed.
+
+### Decisions
+
+Keep the result bounded to the synthetic in-memory model. Preserve the
+comparison/result/reason, exposure-event, and guarding-event separation. Keep
+the R1 schema and bark semantics provisional; the experiment does not justify
+claims about live source truth, coverage, identity ownership, risk, danger, or
+notification usefulness.
+
+### Gotchas
+
+#### 1. The provisional source contract needed explicit material fields
+
+- **Observed:** The first implementation declared which fields were set-like
+  but did not yet declare the complete synthetic material-field set, so an
+  unknown material field could have been accepted.
+- **Why surprising or dangerous:** An undeclared field could silently become
+  material and make the experiment appear more deterministic than the source
+  contract justified.
+- **Diagnosis:** Review the R1 rule that the source contract declares material
+  fields and add a test for an undeclared field.
+- **Resolution or containment:** Added `material_fields` to the immutable
+  source identity, rejected unknown fields during observation construction,
+  and added a regression test. The fixture contract explicitly declares its
+  three synthetic material fields.
+- **Open risk:** Other source kinds would need their own separately declared
+  contract; no such source is implemented here.
+
+#### 2. Adjacent duplicate checks are not strict zip pairs
+
+- **Observed:** A first lint cleanup changed adjacent-value checks to
+  `zip(..., strict=True)`, which raised during fixture import because the
+  compared sequences intentionally have lengths differing by one.
+- **Why surprising or dangerous:** The error occurred before tests ran and
+  could be mistaken for a source or fixture failure rather than a local
+  validation bug.
+- **Diagnosis:** The collection traceback pointed to duplicate detection in
+  `_sorted_unique` during synthetic source construction.
+- **Resolution or containment:** Use explicit `strict=False` for adjacent
+  pair checks, rerun the full suite, and retain tests for set uniqueness.
+- **Open risk:** None observed for the covered canonical value types; future
+  canonical structures still require tests.
+
+#### 3. R1 output names remain intentionally narrow
+
+- **Observed:** The specification distinguishes `not_comparable` comparison
+  results from `guarding_failed` and `guarding_unverifiable` events.
+- **Why surprising or dangerous:** Treating the guard names as comparison
+  kinds would collapse uncertainty into the wrong result model.
+- **Diagnosis:** Compare the clarified R1 document with the separate immutable
+  result/event records and their tests.
+- **Resolution or containment:** Keep guards in their own collection and derive
+  exposure events only from `new`, `changed`, or `disappeared` results.
+- **Open risk:** The provisional names and event policy remain subject to a
+  later accepted design decision.
+
+### Repository state
+
+Directly verified before this implementation commit: branch `main` at
+`4b0ba31` (`docs: clarify R1 guard event semantics`). The implementation,
+synthetic fixtures, tests, and these post-experiment history updates are
+intended for the separate commit `test: execute R1 truthful bark experiment`.
+Ignored Python cache files may exist from test execution; no generated cache
+file is tracked.
+
+### Next question
+
+What, if anything, should be separately approved after reviewing this bounded
+offline result?

@@ -145,3 +145,22 @@ checks contribute no accepted observations; and aggregate outcomes are
   and uncertainty cannot imply exposure change.
 - **Evidence that could change it:** Only an approved R1 result or a later
   explicitly accepted design decision. R1 remains framed and unrun.
+
+## 2026-08-18 — Preserve the R1 result boundary
+
+- **Status:** accepted research-record boundary; R1 schema choices remain
+  provisional
+- **Context:** The approved synthetic R1 implementation and tests exercised the
+  specified baseline, comparison, materiality, failure, uncertainty, scope,
+  ordering, and event-separation cases.
+- **Decision:** Record only the bounded result that this in-memory synthetic
+  model can keep comparison classification, comparison reasons, derived
+  exposure events, and derived guarding events deterministic and distinct. Do
+  not promote the R1 schema, bark semantics, source coverage, source truth,
+  identity interpretation, risk claims, or notification policy to accepted
+  product decisions.
+- **Reasoning:** The checks support deterministic behavior under the declared
+  fixture contract, but they do not test live sources, real identifiers,
+  persistence, or user-facing consequences.
+- **Evidence that could change it:** A separately approved experiment or an
+  explicit project decision with a broader evidence boundary.
