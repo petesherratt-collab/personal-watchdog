@@ -27,6 +27,10 @@ These rules apply to the entire repository.
   data, automating an external action, or expanding scope.
 - Do not implement a later milestone automatically when it crosses one of those
   approval boundaries.
+- After every approved research or implementation step, append an entry to
+  `BUILD_HISTORY.md`. Always include a Gotchas section, writing `None observed`
+  when there were none. Never rewrite earlier entries merely to make the
+  development path appear cleaner; correct them with a later dated note.
 - Run formatting, linting, type checks, and tests before declaring a milestone
   complete.
 - Review `git diff` and report uncommitted files at every handoff.
