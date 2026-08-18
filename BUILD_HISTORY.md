@@ -323,3 +323,68 @@ pending review and explicit approval.
 
 Will the proposed deterministic schema survive the required synthetic
 scenarios without false bark events or hidden non-comparability?
+
+## 2026-08-18 — Clarify R1 guard-event semantics
+
+### Objective
+
+Resolve the material R1 output-semantics ambiguity found by the
+pre-implementation consistency review before writing application code.
+
+### Changes
+
+Updated `RESEARCH_001_BARK_SCHEMA.md`, `DECISIONS.md`, and `RESEARCH_LOG.md` to
+record that implementation correctly stopped, and to define the provisional
+separation between comparison results, reasons, exposure events, and guard
+events. A failed current source check now means `not_comparable` plus a
+`guarding_failed` event; an unverifiable current source check means
+`not_comparable` plus a `guarding_unverifiable` event. Guards can exist without
+a prior successful baseline and never become exposure events. Empty scope is
+rejected during plan construction or validation with no result or event.
+
+No application source, tests, fixtures, persistence, dependency, adapter,
+network call, notification, or R1 run was added in this clarification step.
+
+### Verification
+
+The documentation-only diff was reviewed for the clarified result/event
+separation. `git diff --check` — passed. No R1 verification or experiment run
+has occurred.
+
+### Decisions
+
+The guard semantics and empty-scope behaviour are provisional R1 resolutions,
+not accepted product or schema decisions. The prior stop was correct because
+choosing an output shape merely to satisfy a test would have violated the
+experimental specification.
+
+### Gotchas
+
+#### Material guard-output ambiguity
+
+- **Observed:** The R1 framing defined `failed` and `unverifiable` as source
+  statuses and `not_comparable` as the comparison result, but did not define
+  the required `guarding_failed` and `guarding_unverifiable` names or whether
+  they were result kinds or separate events.
+- **Why surprising or dangerous:** An implementation could collapse a guard
+  into an exposure event, or make failure appear equivalent to disappearance,
+  while still passing a superficially plausible transition test.
+- **Diagnosis:** Compare the R1 terminology, proposed status-guard schema, and
+  required failure scenarios before creating records or comparator code.
+- **Resolution or containment:** Stop before implementation, record the stop,
+  and clarify that guards are separate events alongside `not_comparable`, can
+  exist without a baseline, and are never exposure events.
+- **Open risk:** R1 remains unrun; the clarified provisional model may still
+  expose further ambiguity during implementation.
+
+### Repository state
+
+Before this clarification commit: branch `main` at `610e17e`; the four
+documentation files in this step are modified and unstaged. No implementation
+files are present. The clarification is intended to be committed separately
+as `docs: clarify R1 guard event semantics`.
+
+### Next question
+
+Can the clarified deterministic in-memory model pass the required synthetic
+transitions without false exposure barks or hidden non-comparability?

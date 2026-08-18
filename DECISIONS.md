@@ -123,3 +123,25 @@ decisions: comparability matches `subject_ref`, `source_id`,
 fingerprints; list semantics are declared per field; failed or unverifiable
 checks contribute no accepted observations; and aggregate outcomes are
 `completed`, `incomplete`, `failed`, or invalid `empty_scope` as defined in R1.
+
+## 2026-08-18 — Clarify R1 guard-event semantics
+
+- **Status:** provisional R1 resolution; not an accepted product or schema
+  decision
+- **Context:** A pre-implementation consistency review correctly stopped on a
+  material ambiguity: R1 described `not_comparable` and status guards, while
+  the approved behavioural cases required the exact names
+  `guarding_failed` and `guarding_unverifiable`.
+- **Decision:** Keep `guarding_failed` and `guarding_unverifiable` as separate
+  guard-event kinds. A failed or unverifiable current source check produces
+  `not_comparable` with an explicit reason code and the corresponding guard.
+  Guards are emitted even without a prior successful baseline and can never be
+  exposure events. Reject an empty declared scope during plan construction or
+  validation with a domain-specific `ValueError` subclass such as
+  `InvalidScanPlanError`; it produces no result or event because no check was
+  attempted.
+- **Reasoning:** The comparison classification, comparison reason, derived
+  exposure events, and derived guarding events must remain distinct so failure
+  and uncertainty cannot imply exposure change.
+- **Evidence that could change it:** Only an approved R1 result or a later
+  explicitly accepted design decision. R1 remains framed and unrun.

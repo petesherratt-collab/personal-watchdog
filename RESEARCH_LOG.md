@@ -154,3 +154,38 @@ all schema choices remain provisional.
 
 Will the proposed deterministic schema survive the required synthetic
 scenarios without false bark events or hidden non-comparability?
+
+## 2026-08-18 — Clarify R1 guard-event semantics
+
+### Research question
+
+How should R1 represent a failed or unverifiable current source check without
+allowing a guard to be mistaken for an exposure change?
+
+### Observation
+
+Implementation correctly stopped before code was written when a consistency
+review found that the R1 framing named `not_comparable` and a possible status
+guard but did not define whether the required `guarding_failed` and
+`guarding_unverifiable` names were comparison results or separate events. This
+was a material ambiguity, not a test convenience issue.
+
+### Clarification
+
+The provisional R1 model now separates comparison classification, comparison
+reason, derived exposure events, and derived guarding events. Failed and
+unverifiable current checks produce `not_comparable` plus respectively
+`guarding_failed` or `guarding_unverifiable`, even without a successful
+baseline. Guards never become exposure events. Empty declared scope is invalid
+input rejected before any source check, with no scan result, baseline,
+comparison, exposure event, or guard event.
+
+### Result
+
+The ambiguity is resolved for the approved R1 implementation, but no R1 run
+has occurred and no schema choice has become accepted research evidence.
+
+### Next question
+
+Can the clarified deterministic in-memory model pass the required synthetic
+transitions without false exposure barks or hidden non-comparability?

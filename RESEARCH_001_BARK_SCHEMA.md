@@ -129,11 +129,19 @@ fingerprint or material comparison. `reason_codes` are source-status metadata,
 not observations.
 
 A status transition may produce a **status-guard event** when it prevents a
-comparison. A guard records the source, baseline and current scan references,
-the prior and current source-check statuses, and unique sorted reason codes. It
-is not an exposure bark, does not assert absence, and does not enter an
-observation fingerprint. Diagnostic-only changes never produce
-`exposure-new`, `exposure-changed`, or `exposure-disappeared`.
+comparison. For a failed current source check, the comparison result is
+`not_comparable` with an explicit reason code and a separate
+`guarding_failed` event. For an unverifiable current source check, the result
+is `not_comparable` with an explicit reason code and a separate
+`guarding_unverifiable` event. These guard events are emitted even when no
+previous successful baseline exists: they report inability to guard, not an
+exposure change. A guard records the source and current scan references, the
+current source-check status, any available prior baseline/status references,
+and unique sorted reason codes. Missing prior references are represented as
+absent or null rather than preventing the guard. Guards never become
+`exposure-new`, `exposure-changed`, or `exposure-disappeared` events, do not
+assert absence, and do not enter an observation fingerprint. Diagnostic-only
+changes never produce exposure barks.
 
 ### Comparison result
 
@@ -154,8 +162,11 @@ compared. Proposed per-key result kinds are:
   claim.
 
 `failed` and `unverifiable` are source-check statuses, not comparison results.
-They must be retained as reasons for `not_comparable`, never collapsed into
-`disappeared` or an empty current set.
+They must be retained as explicit reasons for `not_comparable`, never
+collapsed into `disappeared` or an empty current set. A failed current status
+also derives a separate `guarding_failed` event; an unverifiable current
+status derives a separate `guarding_unverifiable` event. Neither guard event
+is a comparison result or an exposure bark.
 
 ### Bark event
 
@@ -163,7 +174,7 @@ A **bark event** is a proposed local, deterministic record that a material
 comparison transition deserves attention. R1 proposes one bark event for each
 `new`, `changed`, or `disappeared` comparison result from a comparable source
 check. It proposes no bark for `baseline`, `unchanged`, `not_comparable`,
-`failed`, or `unverifiable`.
+`failed`, or `unverifiable`, and no guard event is itself barkable.
 
 “Event” here means a comparison result in the experiment model. It does not
 authorize a notification, network transmission, user interface, or durable
@@ -207,6 +218,11 @@ The aggregate outcomes are exact:
 - `failed`: no source completed; and
 - `empty_scope`: invalid request because the declared scope is empty.
 
+An empty declared scope is rejected during scan-plan construction or
+validation with a domain-specific invalid-input error such as
+`InvalidScanPlanError`. It produces no scan result, baseline, comparison,
+exposure event, or guard event because no source check was attempted.
+
 Each declared source must have one terminal source-check status. A missing
 terminal result is treated as a failed source check for aggregate guarding and
 contributes no observations.
@@ -237,9 +253,12 @@ contributes no observations.
 ```
 
 For `failed` or `unverifiable` checks, `observations` is absent or empty and
-`reason_codes` must explain the non-comparable status. Bounded diagnostics may
-be retained, but partial candidates are never accepted observations and cannot
-enter a baseline or comparison. An empty observations array is a successful
+`reason_codes` must explain the non-comparable status. When selected as the
+current check, `failed` derives a separate `guarding_failed` event and
+`unverifiable` derives a separate `guarding_unverifiable` event, including when
+no previous successful baseline exists. Bounded diagnostics may be retained,
+but partial candidates are never accepted observations and cannot enter a
+baseline or comparison. An empty observations array is a successful
 zero-observation result only when `status` is `completed`.
 
 ### Observation
@@ -287,8 +306,9 @@ not as an in-place `changed` result. The source contract must declare which
 ```
 
 For `not_comparable`, `finding_key` and `changed_field_paths` may be absent,
-and `reason_codes` must identify the failed comparability rule. A separate
-status-guard event may accompany this result.
+and `reason_codes` must identify the failed comparability rule. A failed or
+unverifiable current source status must also produce exactly one separate
+status-guard event of the corresponding kind.
 
 ### Status-guard event
 
@@ -299,14 +319,20 @@ status-guard event may accompany this result.
   "source_id": "fixture-source-a",
   "baseline_scan_id": "scan-r1-001",
   "current_scan_id": "scan-r1-002",
+  "guard_kind": "guarding_unverifiable",
   "prior_status": "completed",
   "current_status": "unverifiable",
   "reason_codes": ["blocked"]
 }
 ```
 
-This is a diagnostic guard, not an exposure comparison or bark. Its reason
-codes are a unique sorted set.
+`baseline_scan_id` and `prior_status` may be absent or null when the current
+failed or unverifiable check is the first check or otherwise has no previous
+successful baseline. `guard_kind` is exactly `guarding_failed` when
+`current_status` is `failed` and exactly `guarding_unverifiable` when
+`current_status` is `unverifiable`. This is a diagnostic guard, not an
+exposure comparison or bark. Its reason codes are a unique sorted set and
+must contain an explicit status reason.
 
 ### Bark event
 
@@ -395,9 +421,9 @@ For two comparable observations with the same `finding_key`:
    durations, retry counts, diagnostic text, or `reason_codes`, is non-material
    and produces `unchanged` if `material` is equal and source status remains
    comparable.
-5. A source-status transition may produce a status guard, but diagnostic-only
-   changes and guards never produce `exposure-new`, `exposure-changed`, or
-   `exposure-disappeared`.
+5. A source-status transition may produce a separate status guard, but
+   diagnostic-only changes and guards never produce `exposure-new`,
+   `exposure-changed`, or `exposure-disappeared`.
 6. Any change to `finding_key`, `kind`, or the identity-bearing `locator`
    is not an in-place material change; it becomes `disappeared` plus `new`.
 7. Observation arrays are compared by `finding_key` after applying their
@@ -433,8 +459,12 @@ from an adapter result.
 - A comparable current zero-observation check emits `disappeared` for each
   baseline finding key that is absent currently, with an
   `exposure-disappeared` bark for each.
-- A failed or unverifiable current check emits `not_comparable`, preserves its
-  reason, and emits no disappearance or bark.
+- A failed current check emits `not_comparable` with an explicit reason and a
+  separate `guarding_failed` event; it emits no disappearance or exposure
+  bark. An unverifiable current check emits `not_comparable` with an explicit
+  reason and a separate `guarding_unverifiable` event; it emits no
+  disappearance or exposure bark. Either guard is emitted even without a
+  previous successful baseline.
 - With multiple sources, only source pairs that satisfy every comparability
   rule may produce comparison results. A failed or unverifiable source cannot
   erase another source's baseline or findings.
@@ -453,10 +483,13 @@ step creates no fixtures.
    naming exactly that field.
 6. A completed check changes only context: `unchanged`, no bark.
 7. A completed check removes one baseline observation: one `disappeared` bark.
-8. A current source check fails before producing a result: `not_comparable`, no
-   bark and no disappearance.
+8. A current source check fails before producing a result: `not_comparable`
+   with an explicit reason plus a separate `guarding_failed` event, no bark,
+   and no disappearance, even without a baseline.
 9. A current source check is blocked, malformed, partial, truncated, or
-   contradictory: `unverifiable`, no bark and no disappearance.
+   contradictory: `not_comparable` with an explicit reason plus a separate
+   `guarding_unverifiable` event, no bark, and no disappearance, even without a
+   baseline.
 10. A first check fails or is unverifiable, followed by a completed check:
     establish a baseline, no bark.
 11. Each of subject ref, source ID, canonical scope, adapter ID, adapter
@@ -477,7 +510,8 @@ step creates no fixtures.
     with no completed source is `failed`; and an empty scope is `empty_scope`
     and invalid.
 17. A failed or unverifiable source with bounded partial candidates retains
-    diagnostics only; no candidate enters a baseline or comparison.
+    diagnostics only; no candidate enters a baseline or comparison, and the
+    corresponding guard remains separate from exposure events.
 18. A material change is repeated in a later scan: record the result for the
     experiment, while leaving deduplication and notification policy unresolved.
 
