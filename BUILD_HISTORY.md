@@ -595,3 +595,93 @@ approval.
 
 Can the proposed synthetic response boundary normalize untrusted outcomes into
 R1 source checks without accepting partial candidates or changing R1 meaning?
+
+## 2026-08-18 — Execute R2 adapter boundary experiment
+
+### Objective
+
+Execute the approved Phase 2 R2 experiment against the committed provisional
+adapter-boundary specification without changing R1 or introducing a live
+integration.
+
+### Changes
+
+**Directly verified:** Added `personal_watchdog/r2_adapter.py` with a pure,
+standard-library-only bytes normalizer and immutable trusted-context wrapper.
+It enforces the committed byte, collection, nesting, string, integer, and
+diagnostic limits; performs duplicate-aware strict JSON parsing; rejects
+non-standard constants; validates exact key sets and material types; preserves
+trusted R1 identity; maps all response outcomes to R1 source checks; discards
+partial candidates; and handles exact versus conflicting duplicate findings.
+
+**Directly verified:** Added `tests/fixtures_r2.py` and
+`tests/test_r2_adapter.py` with synthetic-only payloads covering parser attacks,
+all concrete boundaries, outcome mappings, duplicate handling, deterministic
+ordering, diagnostic exclusion, trusted identity ownership, subject isolation,
+and R1 comparator transitions. The existing R1 implementation and tests were
+not modified.
+
+**Directly verified:** `RESEARCH_LOG.md` records observed R2 results. No new
+project-level decision was supported, so `DECISIONS.md` was intentionally left
+unchanged. No R3 work was started.
+
+### Verification
+
+**Directly verified:**
+
+- `.venv/bin/python -m pytest` — 101 passed.
+- `.venv/bin/ruff format --check .` — all files already formatted.
+- `.venv/bin/ruff check .` — all checks passed.
+- `.venv/bin/mypy .` — success, no issues found in 9 source files.
+- `git diff --check` — passed.
+
+### Decisions
+
+Keep the R2 response envelope, limits, reason codes, trusted-context boundary,
+and outcome mappings provisional. Preserve R1 as the sole owner of comparison,
+exposure, and guarding semantics. The passing result is limited to the
+invented offline format and does not authorize a live adapter or R3.
+
+### Gotchas
+
+#### 1. The initial correction attempt was a no-op
+
+- **Observed:** An initial correction attempt accidentally repeated the
+  read-only consistency review and made no changes. This was recorded during
+  the R2 framing correction and remained relevant to this execution handoff.
+- **Why surprising or dangerous:** The implementation could have been started
+  from an apparently reviewed but still incomplete framing.
+- **Diagnosis:** Compare the committed R2 specification with the implementation
+  and test matrix, then inspect the resulting diff rather than relying on the
+  earlier review report.
+- **Resolution or containment:** Implemented the complete committed boundary,
+  inspected the code and tests, and reran the full hostile-input and R1
+  integration suite.
+- **Open risk:** The synthetic choices remain provisional and have no live
+  protocol evidence.
+
+#### 2. R2 output must remain narrower than R1 comparison output
+
+- **Observed:** The required integration scenarios could be satisfied by
+  accidentally recreating comparison or event semantics inside the adapter.
+- **Why surprising or dangerous:** That would create two owners for absence,
+  exposure, and guarding meaning.
+- **Diagnosis:** Review adapter return types and require end-to-end tests to
+  call `compare_scans`.
+- **Resolution or containment:** The adapter returns only `SourceCheck`; all
+  transition assertions use the existing R1 comparator.
+- **Open risk:** A future integration layer could still expand scope without a
+  separate approval.
+
+### Repository state
+
+Directly verified before this implementation commit: branch `main` at
+`5aa2f61` (`docs: frame R2 adapter boundary`). The R2 implementation, synthetic
+fixtures, tests, and the two updated history files are intended for the
+separate commit `test: execute R2 adapter boundary experiment`;
+`DECISIONS.md` and the committed R2 specification remain unchanged.
+
+### Next question
+
+What, if anything, should be separately approved after reviewing this bounded
+R2 result? Stop before R3.

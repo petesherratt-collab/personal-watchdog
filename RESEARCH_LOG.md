@@ -316,3 +316,88 @@ sole owner of comparison and derived-event semantics.
 
 Can the proposed synthetic response boundary normalize untrusted outcomes into
 R1 source checks without accepting partial candidates or changing R1 meaning?
+
+## 2026-08-18 — Execute Research Experiment R2 adapter boundary
+
+### Research question
+
+Can the committed bounded synthetic response boundary normalize untrusted bytes
+into R1 source checks without accepting partial candidates or changing R1
+comparison and event meaning?
+
+### Scope
+
+Implement and test only the standard-library-only R2 normalizer, synthetic
+fixtures, hostile-input tests, and R1 integration tests described by
+`RESEARCH_002_ADAPTER_BOUNDARY.md`. Do not add a real adapter, network access,
+persistence, evidence storage, hashing, encryption, CLI, GUI, notification,
+external dependency, or R3 work.
+
+### Observations
+
+- The normalizer accepts raw `bytes`, rejects values over 65,536 bytes before
+  decoding, uses strict UTF-8, rejects duplicate JSON object keys and
+  `NaN`/`Infinity` constants, and bounds arrays, objects, strings, nesting, and
+  trusted diagnostics with the committed concrete values.
+- The envelope contains only `contract_version`, `source_id`, `outcome`, and
+  `results`. Trusted local context supplies the subject, source identity,
+  scope, adapter identity/version, schema version, normalization version, and
+  diagnostics; response data cannot replace them.
+- Only a valid explicit `completed` response creates a completed R1 source
+  check. Only `completed` with an empty result list represents observed
+  absence. Failed, unverifiable, incomplete, malformed, incompatible, and
+  invalid responses retain no accepted observations; every incomplete response
+  maps to R1 `unverifiable`.
+- Exact duplicate finding records are deterministically deduplicated after R1
+  normalization. Conflicting duplicate finding identities invalidate the
+  entire response. Ordered material lists remain order-sensitive while
+  declared set-like lists use the existing R1 canonicalization.
+- R1 baseline, new, disappearance, guarding, aggregate-incomplete, identity
+  mismatch, diagnostic-exclusion, and subject-isolation transitions remained
+  under the existing `compare_scans` implementation.
+
+### Result
+
+The bounded synthetic R2 adapter experiment passed its hostile-input and
+integration scenarios. Within this synthetic contract, the adapter can produce
+only R1-compatible source-check information while preserving successful empty
+observation, failure, uncertainty, incompatibility, incompleteness, and
+malformation distinctions. No partial candidate entered an observation,
+baseline, comparison, or event.
+
+### Verification
+
+- `.venv/bin/python -m pytest` — 101 passed.
+- `.venv/bin/ruff format --check .` — all files already formatted.
+- `.venv/bin/ruff check .` — all checks passed.
+- `.venv/bin/mypy .` — success, no issues found in 9 source files.
+- `git diff --check` — passed.
+- The implementation is standard-library-only; no R1 source file was modified,
+  and no network, persistence, raw-response retention, real identifier, or
+  external service behavior was added.
+
+### What R2 establishes
+
+It supports a bounded claim about this invented offline response format and
+trusted-context boundary: strict bytes-first validation and explicit outcome
+mapping can preserve R1's truthful-failure and comparison ownership under the
+tested synthetic hostile inputs.
+
+### What R2 does not establish
+
+It does not establish source truth, source coverage, identity ownership, live
+service behavior, protocol compatibility, useful alert frequency, risk,
+notification policy, persistence semantics, or a production adapter contract.
+The limits, fields, reason codes, and mappings remain provisional choices.
+
+### Decision boundary
+
+No new project-level decision was accepted. `DECISIONS.md` remains unchanged;
+the R2 boundary and its result remain provisional, and R1 remains the sole
+owner of comparison, exposure, and guarding semantics. Stop before R3.
+
+### Next question
+
+Whether this bounded synthetic boundary should be retained as provisional
+research scaffolding after review, without treating it as a live integration or
+product contract.
