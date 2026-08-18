@@ -492,3 +492,106 @@ file is tracked.
 
 What, if anything, should be separately approved after reviewing this bounded
 offline result?
+
+## 2026-08-18 — Frame Research Experiment R2 adapter boundary
+
+### Objective
+
+Frame an offline adapter-boundary experiment that can test untrusted response
+normalization without implementing a real adapter or changing R1 comparison and
+event semantics.
+
+### Changes
+
+Created and then concretely corrected `RESEARCH_002_ADAPTER_BOUNDARY.md` with a
+deliberately invented, versioned response envelope; a bytes-first parser
+boundary; fixed 65,536-byte, 100-result, depth-8, string, collection, and
+diagnostic limits; strict duplicate-key and non-standard-constant rejection;
+trusted-context rules; exact allowed-key sets; result validation;
+normalization mappings for completed, completed-empty, failed, unverifiable,
+malformed, incomplete, and incompatible responses; exact-versus-conflicting
+duplicate handling; boundary ownership; synthetic scenarios; falsification
+conditions; and the approval boundary.
+
+Updated `RESEARCH_LOG.md` to record the concrete R2 framing and that R2 is
+framed but not run. No application source, parser, adapter, fixture, test,
+dependency, network call, persistence, comparison, bark, notification,
+evidence archive, or real identifier was added.
+
+### Verification
+
+The corrected documentation diff is reviewed for separation from R1, concrete
+hostile-input rules, and the absence of implementation authorization.
+
+- `.venv/bin/python -m pytest` — 29 passed.
+- `.venv/bin/ruff format --check .` — 20 files already formatted.
+- `.venv/bin/ruff check .` — all checks passed.
+- `.venv/bin/mypy .` — success, no issues found in 6 source files.
+- `git diff --check` — passed.
+- No R2 tests or adapter checks have run.
+
+### Decisions
+
+All R2 envelope and normalization choices remain provisional. Keep response
+contract validation and source-check construction at the adapter boundary, and
+keep comparison and derived-event ownership entirely in R1.
+
+### Gotchas
+
+#### 1. The response example does not contain all R1 identity fields
+
+- **Observed:** The required envelope contains `contract_version`,
+  `source_id`, `outcome`, and `results`, while R1 comparability also requires
+  scope, adapter, schema, and normalization identity.
+- **Why surprising or dangerous:** Letting untrusted response data fill or
+  replace those fields could make an incompatible response appear comparable.
+- **Diagnosis:** Compare the R2 envelope boundary with `SourceIdentity` and
+  R1's exact comparability rules.
+- **Resolution or containment:** Treat the R1 identity as trusted local
+  context; use `contract_version` only for response-envelope validation and
+  never as an identity substitute.
+- **Open risk:** A later adapter implementation must define how that trusted
+  context is constructed without introducing an unapproved configuration or
+  live-service assumption.
+
+#### 2. Malformed and incompatible are normalization classifications
+
+- **Observed:** R1 has `completed`, `failed`, and `unverifiable` source
+  statuses, but the R2 question also requires malformed, incomplete, and
+  incompatible distinctions.
+- **Why surprising or dangerous:** Adding those labels as new R1 statuses
+  would silently change the existing comparator contract.
+- **Diagnosis:** Map the additional categories to bounded reasons on an R1
+  `unverifiable` source check while retaining the category for diagnostics.
+- **Resolution or containment:** Keep the extra classifications at the R2
+  boundary and require zero accepted observations for them.
+- **Open risk:** The concrete error/result mapping is now provisionally framed;
+  a separately approved implementation must still realize and test it without
+  weakening the boundary.
+
+#### 3. The initial correction attempt repeated review without changing files
+
+- **Observed:** An initial correction attempt accidentally repeated the
+  read-only consistency review and made no changes.
+- **Why surprising or dangerous:** The known omissions—bytes input, concrete
+  limits, strict JSON handling, and complete outcome mappings—would have
+  remained in the framing while appearing to have been addressed.
+- **Diagnosis:** Compare the first attempted handoff with the resulting
+  worktree status and inspect the revised R2 document for the concrete rules.
+- **Resolution or containment:** Apply the authorized documentation correction
+  in this step, inspect the diff, and require the full 28-point review before
+  staging or committing.
+- **Open risk:** R2 remains framed and unrun; implementation must preserve the
+  corrected boundary and R1 ownership.
+
+### Repository state
+
+Directly verified before this framing step: branch `main` at `62e2d94`
+(`test: execute R1 truthful bark experiment`), clean. The new R2 framing and
+research-history entry are deliberately uncommitted pending review and
+approval.
+
+### Next question
+
+Can the proposed synthetic response boundary normalize untrusted outcomes into
+R1 source checks without accepting partial candidates or changing R1 meaning?

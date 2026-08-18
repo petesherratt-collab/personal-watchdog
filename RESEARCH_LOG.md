@@ -261,3 +261,58 @@ to an accepted product design. No further experiment begins in this entry.
 
 What, if anything, should be separately approved after reviewing this bounded
 offline result?
+
+## 2026-08-18 — Frame Research Experiment R2
+
+### Research question
+
+Can a bounded, untrusted synthetic adapter response be normalized into an R1
+source check while preserving completed, completed-empty, failed,
+unverifiable, malformed, incomplete, and incompatible distinctions?
+
+### Scope
+
+Create the provisional `RESEARCH_002_ADAPTER_BOUNDARY.md` framing only. Define
+a bytes-first parser boundary, a versioned invented response envelope, strict
+JSON and object-key validation, concrete limits, result validation,
+response-to-R1 status mapping, trusted-context ownership, synthetic scenarios,
+falsification conditions, and the approval boundary. Do not implement or run
+an adapter, parser, fixture, comparison, bark, network call, persistence
+layer, dependency, or notification.
+
+### Observations
+
+- The response format is deliberately synthetic and does not model
+  XposedOrNot, Maigret, or another real service.
+- The normalizer accepts raw bytes, rejects inputs above 65,536 bytes before
+  decoding, and applies a maximum of 100 results and nesting depth 8.
+- Duplicate JSON keys, `NaN`, `Infinity`, `-Infinity`, malformed UTF-8, parser
+  errors, unknown fields, unsupported types, and excessive values become
+  bounded unverifiable outcomes with fixed reason codes.
+- `contract_version` identifies only the response envelope. Trusted local R1
+  context supplies subject, source, scope, adapter, schema, and normalization
+  identity; the response cannot provide or overwrite those fields.
+- Explicit completed, completed-empty, failed, unverifiable, incomplete,
+  malformed, and incompatible conditions have separate provisional
+  classifications. Every incomplete response maps to R1 `unverifiable`, and
+  partial candidates are discarded.
+- Exact duplicate result identities may be deduplicated; conflicting duplicate
+  identities make the entire response unverifiable.
+- Only a normalized R1 `SourceCheck` may cross the boundary. R2 must never
+  produce a comparison result or a derived exposure or guarding event.
+
+### Result
+
+R2 has been framed but not run. The concrete parser boundary, limits, response
+envelope, mappings, scenarios, falsification conditions, and approval boundary
+remain provisional. No adapter code or research result was created.
+
+### Decision boundary
+
+Stop for explicit approval before implementing or running R2. R1 remains the
+sole owner of comparison and derived-event semantics.
+
+### Next question
+
+Can the proposed synthetic response boundary normalize untrusted outcomes into
+R1 source checks without accepting partial candidates or changing R1 meaning?
