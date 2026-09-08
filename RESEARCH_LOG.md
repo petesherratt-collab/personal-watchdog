@@ -401,3 +401,205 @@ owner of comparison, exposure, and guarding semantics. Stop before R3.
 Whether this bounded synthetic boundary should be retained as provisional
 research scaffolding after review, without treating it as a live integration or
 product contract.
+
+## 2026-09-06 — Frame Research Experiment R2.5 visible offline simulator
+
+### Research question
+
+Can the existing R1 comparison model and R2 bytes-first normalizer be exposed
+through a small deterministic offline scenario runner without adding
+comparison semantics, while making later bark-policy questions observable?
+
+### Scope
+
+Create only `RESEARCH_002_5_VISIBLE_OFFLINE_SIMULATOR.md`. Define a strict
+synthetic scenario-file boundary, trusted local context versus simulated
+untrusted bytes, chronological in-memory orchestration, human and canonical
+machine-readable output, expectation comparison, exit codes, truthful failure
+visibility, and ten curated scenarios. Do not implement or run a simulator,
+add fixtures, alter R1/R2, add persistence, use a network, or begin R3.
+
+### Repository reconciliation
+
+The R1 and R2 design documents remain provisional framing artifacts and retain
+their framing status language. The append-only research and build records
+separately record the approved synthetic implementations and the 101-test R2
+result. R2.5 treats this as a distinction between design-artifact status and
+experiment execution history, not as permission to change either boundary.
+
+The observed desktop packaging gotcha is retained: editable installation
+failed because setuptools discovered both `data` and `personal_watchdog` as
+top-level packages. Direct installation of pytest, Ruff, and mypy succeeded.
+Packaging remains separate work.
+
+### Result
+
+The framing keeps R2 responsible for bytes-to-`SourceCheck` normalization and
+R1 responsible for `compare_scans`, comparison results, exposure events, and
+guarding events. It requires failed, unverifiable, malformed, incomplete,
+incompatible, and adapter-rejected inputs to remain visible and never become
+completed-empty or disappearance. It defines scenarios for baseline silence,
+new exposure, material change, genuine disappearance, failure, unverifiable
+input, mixed-source failure/change, adapter/schema incompatibility, hostile
+false-clean input, and simultaneous findings.
+
+Repeated-failure suppression, recovery events, trivial-change suppression,
+simultaneous grouping, baseline overload, minimum actionable bark information,
+and disappearance confirmation remain later experimental questions. No
+project-level decision was established, so `DECISIONS.md` remains unchanged.
+
+### Verification
+
+- `.venv/bin/python -m pytest` — 101 passed.
+- R2.5 framing remains documentation-only; no simulator or scenario fixture
+  was implemented or run.
+- No real identifiers, credentials, network calls, persistence, evidence
+  hashing, archive changes, scheduler, notification, or R3 work was added.
+
+### Decision boundary
+
+Stop for adversarial review before implementing the proposed Phase 2 files.
+
+### Next question
+
+Does the proposed visible contract expose the existing R1/R2 behavior clearly
+enough for a later implementation without silently choosing a bark policy?
+
+## 2026-09-06 — Verify R2.5 framing handoff
+
+### Observation
+
+The framing was reconciled with the committed R1/R2 APIs. One JSON file now
+represents one scenario; the ten curated scenarios are proposed as ten exact
+Phase 2 files. Expected R1 projections include the complete existing record
+fields, while local construction errors explicitly bypass R2 and use a fixed
+R1 failed-check reason.
+
+### Verification
+
+- `.venv/bin/python -m pytest` — 101 passed.
+- `.venv/bin/ruff format --check .` — 24 files already formatted.
+- `.venv/bin/ruff check .` — all checks passed.
+- `.venv/bin/mypy .` — success, no issues found in 9 source files.
+- `git diff --check` — passed.
+- Complete diff inspection was performed; no source, test, fixture, dependency,
+  archive, or `DECISIONS.md` change was made.
+
+### Result
+
+R2.5 remains a framing-only step. The repository shows no material
+contradiction that blocks the framing: the README's Milestone 0 status remains
+consistent with the absence of a product scanner, live network adapter, and
+reporting CLI, while the later synthetic R1/R2 modules and append-only records
+document the completed experiments. The stale milestone wording is historical
+context, not a new behavior requirement.
+
+### Decision boundary
+
+Stop for adversarial review. Do not create the proposed Phase 2 files or alter
+R1/R2 semantics in this turn.
+
+## 2026-09-08 — Revise R2.5 framing contract
+
+### Scope
+
+Revise the framing without implementing or running the proposed simulator.
+
+### Documented reconciliation
+
+The revised document moves R2 expectations to checks and the complete expected
+R1 `ComparisonReport` to scans; defines exact scenario/output/diagnostic key
+sets and grammar; derives all execution IDs; removes the trusted
+`exposure_silence` oracle; exercises local construction error in Scenario 7;
+adds fixed outer bounds and exact validation rules; and renames Scenario 8 to
+identify the R1 trusted-identity/version incompatibility boundary. Scenario 5
+continues to cover an explicit R2 failed response.
+
+### Result status
+
+This is a documentation and reconciliation update only. The proposed simulator
+behavior was not executed or behaviorally verified. Existing test and tooling
+checks do not constitute execution of the proposed ten scenarios.
+
+### Decision boundary
+
+Stop for adversarial review before Phase 2 implementation. `DECISIONS.md`, R1,
+R2, tests, fixtures, dependencies, and external repositories remain unchanged.
+
+## 2026-09-08 — Verify R2.5 framing revision
+
+### Verification observation
+
+The existing repository suite and tooling checks completed successfully:
+
+- `.venv/bin/python -m pytest` — 101 passed.
+- `.venv/bin/ruff format --check .` — 24 files already formatted.
+- `.venv/bin/ruff check .` — all checks passed.
+- `.venv/bin/mypy .` — success, no issues found in 9 source files.
+- `git diff --check` — passed.
+
+Complete diff inspection observed changes only in the R2.5 framing document and
+the three already changed logs. The proposed simulator and its ten scenarios
+were not executed; the checks do not behaviorally verify proposed Phase 2
+behavior.
+
+### Decision boundary
+
+Stop for adversarial review. No implementation, staging, commit, push, or R1/R2
+change was made.
+
+## 2026-09-08 — Final R2.5 ownership-boundary correction
+
+### Documented reconciliation
+
+The framing now assigns construction of only `scan_id` and `source_check_id` to
+the runner. R1 alone constructs `comparison_id` and `guard_id`; their formulas
+remain repository observations for authors. Expected IDs are ordinary
+well-typed oracle strings compared literally with `compare_scans` output, so a
+wrong ID is exit-code-1 expectation mismatch rather than exit-code-2 invalid
+scenario.
+
+Each scan must resolve its source references to unique source IDs, with
+duplicate resolution reported as `reference_error`; different scans may use
+different identities for the same source ID. One-file syntax validation cannot
+enforce cross-file `scenario_id` uniqueness, so the ten-fixture test suite must
+enforce it.
+
+### Result status
+
+Documentation and reconciliation only. The proposed simulator behavior was
+not executed or behaviorally verified.
+
+### Decision boundary
+
+Stop for adversarial review. Do not begin Phase 2 or modify R1/R2.
+
+## 2026-09-08 — Verify final R2.5 boundary correction
+
+### Verification observation
+
+The established repository checks completed successfully: 101 pytest tests
+passed; Ruff format and lint passed; mypy found no issues in 9 source files;
+and `git diff --check` passed. Complete diff inspection observed only the
+framing document and the three already changed logs. The proposed simulator
+was not executed or behaviorally verified.
+
+### Decision boundary
+
+Stop for adversarial review. No Phase 2 implementation or Git mutation was
+made.
+
+## 2026-09-08 — Final R2.5 framing verification observation
+
+### Verification observation
+
+The existing repository checks completed successfully: 101 pytest tests passed;
+Ruff format reported 24 files already formatted; Ruff lint passed; mypy found
+no issues in 9 source files; and `git diff --check` passed. Complete diff
+inspection observed only the requested framing document and three logs. The
+proposed simulator behavior was not executed or behaviorally verified.
+
+### Decision boundary
+
+Stop for adversarial review with no implementation, staging, commit, push, or
+R1/R2 change.
