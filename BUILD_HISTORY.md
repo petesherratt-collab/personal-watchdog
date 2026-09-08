@@ -954,3 +954,67 @@ unverified. No new gotcha was observed.
 
 Stop for adversarial review without staging, committing, pushing, or beginning
 Phase 2.
+
+## 2026-09-08 — Implement R2.5 visible offline simulator
+
+### Implementation and verification
+
+- Added the bounded standard-library-only `offline_simulator` CLI, its ten
+  frozen synthetic scenarios, and focused contract tests.
+- Executed every curated scenario in human and JSON modes; all twenty runs
+  returned exit code `0`.
+- Exercised a controlled expected-ID mismatch through the CLI with exit code
+  `1`, and invalid scenario cases through the CLI with exit code `2`.
+- Full pytest suite: 129 passed.
+- Ruff format check: 27 files already formatted.
+- Ruff lint: all checks passed.
+- mypy: success, no issues found in 12 source files.
+- `git diff --check`: passed.
+
+### Gotchas
+
+- The previously observed editable-install packaging failure remains separate
+  work: setuptools discovers both `data` and `personal_watchdog` as top-level
+  packages. Verification used the already working direct tool installation.
+- R1 emits only the source check’s reason code on a non-comparable failed or
+  unverifiable comparison; the scenario oracles were aligned to that existing
+  behavior rather than adding a runner reason.
+
+### Status
+
+These are deterministic synthetic offline executions and tests. They do not
+verify live-source truth, archive behavior, notifications, or product
+usefulness. Stop for adversarial implementation review without staging,
+committing, pushing, or beginning R3.
+
+## 2026-09-08 — R2.5 adversarial implementation corrections
+
+### Implementation and verification
+
+- Replaced whole-file scenario reads with a binary read capped at
+  `MAX_SCENARIO_BYTES + 1`.
+- Corrected mismatch JSON Pointer array positions and made differing object
+  fields sort by pointer component after preserving scan/source/R1 ordering.
+- Corrected local construction marker diagnostics and expanded contract tests
+  for output goldens, canonical JSON, all bounds, validation, and fixture
+  hygiene.
+- All ten scenarios passed in human and JSON modes with exit code `0`.
+- Controlled expectation mismatch: exit `1`; controlled invalid/reference
+  cases: exit `2`.
+- Full pytest suite: 147 passed.
+- Ruff format check: 27 files already formatted; Ruff lint passed.
+- mypy: success, no issues found in 12 source files.
+- `git diff --check`: passed.
+
+### Gotchas
+
+- The editable-install packaging discovery failure remains separate work.
+- No valid scenario meaning or R1/R2 behavior was changed; this pass tightened
+  runner safety, diagnostics, deterministic reporting, and test coverage.
+
+### Status
+
+Verification is limited to deterministic synthetic offline scenarios and local
+tests. It does not establish live-source truth or product usefulness. Stop for
+adversarial review without staging, committing, pushing, modifying R1/R2, or
+beginning R3.

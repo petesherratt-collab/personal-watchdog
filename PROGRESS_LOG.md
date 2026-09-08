@@ -330,3 +330,28 @@ and lint passed; mypy found no issues in 9 source files; and `git diff --check`
 passed. Complete diff inspection found only the framing document and the three
 already changed logs. The proposed simulator remains unimplemented and
 unexecuted.
+
+## 2026-09-08 — R2.5 implementation execution record
+
+The frozen framing was implemented as a visible deterministic offline runner
+with ten synthetic scenario files and focused tests. Human and machine CLI
+runs passed for all ten scenarios with exit code `0`; controlled expectation
+mismatch and invalid-scenario CLI tests returned `1` and `2` respectively.
+The full suite passed with 129 tests, and formatting, lint, mypy, and diff
+checks passed. These results are local synthetic observations only and do not
+establish live-source truth or product usefulness.
+
+Stop for adversarial implementation review. No staging, commit, push, or R3
+work was performed.
+
+## 2026-09-08 — R2.5 adversarial implementation corrections
+
+The Phase 2 runner now bounds file reads before parsing, emits array-accurate
+and insertion-order-independent mismatch pointers, and reports exact local
+construction validation paths. Tests cover the complete output contract,
+declared bounds, focused validation, expectation isolation, and synthetic
+fixture hygiene. All ten scenarios passed in both modes; the full suite passed
+with 147 tests. No R1/R2 or valid scenario meaning changed.
+
+Stop for adversarial review. No staging, commit, push, or R3 work was
+performed.

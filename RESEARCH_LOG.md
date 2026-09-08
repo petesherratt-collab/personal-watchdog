@@ -603,3 +603,61 @@ proposed simulator behavior was not executed or behaviorally verified.
 
 Stop for adversarial review with no implementation, staging, commit, push, or
 R1/R2 change.
+
+## 2026-09-08 — Execute R2.5 visible offline simulator
+
+### Synthetic execution observation
+
+Phase 2 was implemented against the frozen R2.5 framing. All ten curated
+scenario files passed in both human and `--json` modes with exit code `0`:
+
+1. baseline followed by silence;
+2. new exposure;
+3. material change;
+4. genuine disappearance;
+5. source failure without disappearance;
+6. unverifiable source;
+7. mixed local construction failure and valid change;
+8. R1 trusted identity/version incompatibility;
+9. hostile false-clean response;
+10. simultaneous findings.
+
+The test suite also exercised a controlled CLI expectation mismatch (exit `1`)
+and invalid scenarios (exit `2`). These are synthetic offline observations of
+the existing R1/R2 behavior and runner contract only; they say nothing about
+live-source truth or product usefulness.
+
+### Boundary observation
+
+The runner constructs only scan and source-check IDs. R2 interpreted the
+simulated bytes, while R1 constructed source aggregates, comparisons, IDs,
+exposure events, and guarding events. Exposure silence was derived only from
+the actual R1 exposure collection. No live source, persistence, archive,
+network, credential, or later milestone behavior was added.
+
+### Decision boundary
+
+Stop for adversarial implementation review. Do not stage, commit, push, or
+begin R3.
+
+## 2026-09-08 — R2.5 adversarial implementation corrections
+
+### Synthetic execution observation
+
+The runner was revised without changing the ten valid scenario meanings.
+Scenario-file reads are bounded before parsing; mismatch pointers use actual
+array positions and deterministic sorted object-field traversal; and local
+construction validation reports the exact marker path. Tests now exercise the
+complete frozen output grammar, canonical serialization, all declared bounds,
+validation rules, fixture hygiene, and expectation isolation.
+
+All ten scenarios again passed in both human and JSON modes with exit code `0`.
+Controlled expectation mismatch and invalid/reference-error cases returned
+exit codes `1` and `2`. The full suite passed with 147 tests. These remain
+synthetic offline observations only and establish neither live-source truth
+nor product usefulness.
+
+### Decision boundary
+
+Stop for adversarial review. Do not stage, commit, push, modify R1/R2, or
+begin R3.
