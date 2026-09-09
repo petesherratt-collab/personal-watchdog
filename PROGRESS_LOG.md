@@ -548,3 +548,56 @@ sequence:
 
 No implementation, functional request, identifier, credential, staging,
 commit, push, or unrelated file change was made.
+
+## 2026-09-09 — R3 Phase 2 synthetic experiment implementation
+
+R3 Phase 2 now contains only the frozen free check-email synthetic adapter,
+fixtures, and tests. The adapter keeps trusted source context outside
+response bytes, distinguishes pre-status and post-status failures, rejects
+ambiguous HTTP-200 bodies, preserves the selected no-completed-empty rule,
+delegates candidate validation/deduplication to R2, and leaves all comparison,
+exposure, guarding, and disappearance semantics to R1.
+
+The implementation remains offline and standard-library-only. Analytics and
+live integration remain deferred.
+
+## 2026-09-09 — R3 Phase 2 verification
+
+The final requested sequence passed: 199 tests, 31 Ruff-formatted files,
+clean Ruff lint, mypy with 15 checked source files, and clean Git whitespace.
+The 199-test total is 147 existing tests plus 52 new synthetic XON tests; the
+R2.5 implementation files were not changed. The experiment remains offline,
+synthetic, and stopped before live integration.
+
+## 2026-09-09 — Final transport invariant correction
+
+Pre-status transport failures now reject retained response headers as a visible
+construction error. The final rerun remained green: 199 tests passed, Ruff
+format/lint passed, mypy passed, and `git diff --check` passed. This is the
+final Phase 2 verification state.
+
+## 2026-09-09 — R3 Phase 2 adversarial correction pass
+
+Added the bounded hostile-integer regression, explicit simultaneous-fault
+precedence, exact non-BMP size evidence, all requested adjacent-bound tests,
+and chronologically distinct R1 integration IDs. The selected experiment
+remains synthetic, standard-library-only, and offline.
+
+## 2026-09-09 — Verify R3 Phase 2 adversarial correction pass
+
+Final verification passed: 207 tests, Ruff format and lint, mypy, and
+`git diff --check`. The branch remains uncommitted and no live-source work was
+started.
+
+## 2026-09-09 — R3 Phase 2 final consistency corrections
+
+Aligned the oversized-envelope documentation with the implemented visible
+construction rejection and added the missing incomplete first-check R1 guard
+coverage. Corrected the recorded test arithmetic to 147 pre-R3 plus 60 focused
+XON tests = 207 total.
+
+## 2026-09-09 — Verify R3 Phase 2 final consistency corrections
+
+Final consistency verification passed with 207 tests and clean formatting,
+lint, mypy, and whitespace checks. No commit, push, or live-source work was
+performed.

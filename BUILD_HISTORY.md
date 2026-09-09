@@ -1269,3 +1269,211 @@ verification sequence. Exact commands and outputs were:
 
 Documentation-only correction verified. Stop for final adversarial review
 without implementation, staging, commit, or push.
+
+## 2026-09-09 — Implement R3 Phase 2 synthetic XON check-email experiment
+
+### Objective
+
+Implement only the frozen deterministic check-email experiment from R3 Phase 1
+after confirming the exact Phase 1 HEAD, upstream branch, and clean starting
+tree.
+
+### Changes
+
+- Added the standard-library-only in-memory `TransportAttempt` and bounded raw
+  `Header` contract, including trusted-context validation, exact header
+  accounting, content-type derivation, and distinct transport failure/body
+  states.
+- Added check-email-only XON normalization with strict UTF-8/JSON validation,
+  exact schema and echo checks, bounded NFC strings, no completed-empty path,
+  deterministic breach candidates, and existing R2 deduplication.
+- Added deterministic compact ASCII-escaped R2 serialization with the final
+  byte guard before calling the existing R2 adapter.
+- Added synthetic fixtures and tests for every constructible selected matrix
+  row, R1 guarding/disappearance protection, size bounds, and absence of
+  network-capable imports.
+
+### Boundary
+
+No functional request, identifier submission, credential, HTTP client,
+analytics implementation, persistence, scheduler, notification, archive,
+dependency, R1/R2/R2.5 modification, staging, commit, or push was made.
+Verification proves only deterministic synthetic behavior, not live
+XposedOrNot compatibility, completeness, freshness, coverage, usefulness, or
+safety.
+
+### Gotchas
+
+- The selected check-email contract has no completed-empty result; zero valid
+  findings remain unverifiable.
+- Post-status read failures preserve the received HTTP status but become
+  incomplete and never parse a retained prefix.
+- Exact duplicate breach names are intentionally delegated to generic R2
+  deterministic deduplication; conflicting XON duplicates are not constructible.
+
+### Status
+
+Implementation is complete pending the final full verification sequence and
+adversarial implementation review.
+
+## 2026-09-09 — Verify R3 Phase 2 synthetic experiment
+
+### Verification
+
+The complete implementation diff and status inspection preceded this final
+verification sequence. Exact commands and outputs were:
+
+- `./.venv/bin/python -m pytest` — `199 passed in 6.87s`.
+- `./.venv/bin/ruff format --check .` — `31 files already formatted`.
+- `./.venv/bin/ruff check .` — `All checks passed!`.
+- `./.venv/bin/mypy .` — `Success: no issues found in 15 source files`.
+- `git diff --check` — no output; exit 0.
+
+The R2.5 checkpoint contained 147 tests. The final count is 199 because this
+phase adds 52 synthetic XON adapter tests; no existing R1, R2, R2.5, or offline
+simulator Python file was changed.
+
+### Gotchas
+
+- Verification covers only deterministic synthetic behavior. It does not prove
+  live XposedOrNot compatibility, completeness, freshness, coverage,
+  usefulness, or safety.
+- No network-capable import or call was added; no functional endpoint was used.
+
+### Status
+
+R3 Phase 2 synthetic implementation is verified and stopped for adversarial
+implementation review without staging, commit, push, merge, or live work.
+
+## 2026-09-09 — Final transport invariant correction and verification
+
+### Correction
+
+Pre-status failures now reject retained headers as contradictory local
+envelopes: without an HTTP status, no response headers can be present. The
+selected outcome mappings and all other transport states are unchanged.
+
+### Verification
+
+After the correction, the exact final sequence passed:
+
+- `./.venv/bin/python -m pytest` — `199 passed in 6.44s`.
+- `./.venv/bin/ruff format --check .` — `31 files already formatted`.
+- `./.venv/bin/ruff check .` — `All checks passed!`.
+- `./.venv/bin/mypy .` — `Success: no issues found in 15 source files`.
+- `git diff --check` — no output; exit 0.
+
+### Gotchas
+
+- This correction supersedes the earlier 6.87-second implementation
+  verification as the final code verification; both were separate successful
+  runs.
+
+### Status
+
+Final synthetic implementation verification is complete; stop for adversarial
+review without staging, commit, push, merge, or live work.
+
+## 2026-09-09 — R3 Phase 2 adversarial correction pass
+
+### Corrections
+
+- JSON decoding now catches ordinary `ValueError`, including Python’s bounded
+  integer-conversion limit, and maps it to the existing R2-compatible
+  `response_unverifiable` result without broad exception handling elsewhere.
+- Transport precedence is frozen and implemented: construction rejection,
+  pre-status failure, HTTP 400-or-greater failure, known-status incomplete
+  body, complete-body metadata unverifiability, unsupported below-400 status,
+  then eligible HTTP-200 XON normalization.
+- Exact boundary tests now use a non-BMP code point and assert 13,918-byte XON
+  and 25,910-byte normalized-R2 outputs, plus every requested adjacent bound.
+- R1 integration fixtures now use distinct deterministic baseline/current scan
+  and source-check IDs and assert visible guarding without disappearance or
+  exposure.
+
+### Gotchas
+
+- A status at or above 400 wins over simultaneous malformed headers,
+  over-limit body state, or post-status read failure.
+- The exact size evidence is serializer-specific and remains synthetic; it is
+  not evidence of live service response size or compatibility.
+
+### Status
+
+Correction implementation is complete pending the final full verification
+sequence and adversarial review.
+
+## 2026-09-09 — Verify R3 Phase 2 adversarial correction pass
+
+### Verification
+
+The complete corrected diff and status inspection preceded this final required
+sequence. Exact commands and outputs were:
+
+- `./.venv/bin/python -m pytest -q` — `207 passed in 6.09s`.
+- `./.venv/bin/ruff format --check .` — `31 files already formatted`.
+- `./.venv/bin/ruff check .` — `All checks passed!`.
+- `./.venv/bin/mypy .` — `Success: no issues found in 15 source files`.
+- `git diff --check` — no output; exit 0.
+- `git --no-pager diff --stat` — 4 tracked files changed; 287 insertions and
+  2 deletions. Untracked implementation/test files are listed by status.
+
+The test count is 147 pre-R3 tests plus 60 focused XON tests = 207 total.
+
+### Gotchas
+
+- The exact 6.09-second runtime is one final run; earlier successful timings
+  remain historical execution variance.
+- Verification remains synthetic and offline and does not establish live
+  compatibility, completeness, freshness, coverage, usefulness, or safety.
+
+### Status
+
+Correction pass is verified and stopped for adversarial review without
+staging, commit, push, merge, or live-source work.
+
+## 2026-09-09 — R3 Phase 2 final consistency corrections
+
+### Corrections
+
+- The research document now matches the implementation: an oversized
+  generated R2 envelope raises `R2EnvelopeTooLargeError` as a visible local
+  construction rejection before R2, unreachable through the bounded selected
+  XON path.
+- The first-check R1 integration test now includes an after-status incomplete
+  attempt and asserts no baseline, `NOT_COMPARABLE`,
+  `guarding_unverifiable`, `response_incomplete`, and no exposure events.
+- Corrected the recorded arithmetic to state: 147 pre-R3 tests plus 60
+  focused XON tests = 207 total.
+
+### Gotchas
+
+- The oversized-envelope rejection is a local guard, not an R2 or R1 source
+  outcome.
+
+### Status
+
+Final consistency corrections are complete pending verification and adversarial
+review.
+
+## 2026-09-09 — Verify R3 Phase 2 final consistency corrections
+
+### Verification
+
+The complete corrected diff and status inspection preceded this final sequence:
+
+- `./.venv/bin/python -m pytest -q` — `207 passed in 6.19s`.
+- `./.venv/bin/ruff format --check .` — `31 files already formatted`.
+- `./.venv/bin/ruff check .` — `All checks passed!`.
+- `./.venv/bin/mypy .` — `Success: no issues found in 15 source files`.
+- `git diff --check` — no output; exit 0.
+
+### Gotchas
+
+- The oversized generated-envelope guard raises visibly before R2 and is not
+  a source outcome.
+
+### Status
+
+Final consistency corrections are verified and stopped for adversarial review
+without staging, commit, push, merge, or live-source work.

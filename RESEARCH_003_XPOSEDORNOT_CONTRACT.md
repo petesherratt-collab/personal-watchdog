@@ -371,8 +371,8 @@ rejected before the synthetic experiment runs.
   active.
 - A failure before an HTTP status is received has
   `failure_phase="before_status"`, `http_status=null`, `body_state="absent"`,
-  and empty body bytes. Exactly one of `transport_failure="transport"` or
-  `timed_out=true` is active.
+  empty body bytes, and no retained response headers. Exactly one of
+  `transport_failure="transport"` or `timed_out=true` is active.
 - A body read failure or timeout after a valid HTTP status is received has
   `failure_phase="after_status"`, an integer `http_status`,
   `body_state="incomplete"`, and exactly one active failure flag. It may
@@ -403,6 +403,30 @@ metadata is missing, duplicate, non-ASCII, malformed, or incompatible is
 classified conservatively as `failed`, `incomplete`, or `unverifiable` by the
 matrix; harness construction errors are never collapsed into source
 unverifiability.
+
+### 12.4 Simultaneous-fault precedence
+
+When a valid transport attempt contains more than one defect, classification
+uses this order and does not add comparison, bark, disappearance, retry, or
+live-transport policy:
+
+1. Contradictory or structurally impossible local `TransportAttempt`
+   construction is rejected visibly with `TransportConstructionError`.
+2. A failure before an HTTP status exists is `failed`.
+3. Once a status exists, HTTP status 400 or greater is `failed`, even when
+   headers are malformed, the body is over-limit, or a post-status read failure
+   is also present.
+4. For a known status below 400, a post-status read failure or over-limit body
+   is `incomplete`.
+5. For a known status below 400 with a complete bounded body, malformed or
+   unacceptable header metadata is `unverifiable`.
+6. Redirects, informational statuses, and other unsupported statuses below
+   400 are `unverifiable`.
+7. Only an exact eligible HTTP 200 attempt with acceptable metadata and a
+   complete bounded body proceeds to XON body normalization.
+
+This is transport failure-classification precedence only. It does not alter
+R1 comparison, exposure, guarding, disappearance, or retry ownership.
 
 ## 13. Boundary ownership
 
@@ -476,11 +500,13 @@ this exact serialization:
 - measurement of the final UTF-8 encoded byte string before R2 is called.
 
 If the final encoded envelope exceeds the existing R2
-`MAX_INPUT_BYTES = 65,536` bytes, the normalizer refuses to call R2 and
-returns a visible `unverifiable` construction/normalization result with no
-observations. No R2 constant or implementation is changed. Under the frozen
-selected bounds, the maximum is 25,910 bytes, so this refusal is a defensive
-guard rather than an expected selected-matrix success path.
+`MAX_INPUT_BYTES = 65,536` bytes, the normalizer raises
+`R2EnvelopeTooLargeError`, a visible local `TransportConstructionError`,
+before calling R2. It does not return a `SourceCheck` or convert the condition
+to a source `unverifiable` result. No R2 constant or implementation is
+changed. Under the frozen selected bounds, the maximum is 25,910 bytes, so
+this rejection is unreachable through the selected bounded XON path and is a
+defensive construction guard only.
 
 ## 15. Success structures, finding identity, and material policy
 

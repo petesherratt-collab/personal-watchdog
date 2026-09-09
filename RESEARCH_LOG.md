@@ -972,3 +972,137 @@ variance, not behavior changes.
 
 No adapter, functional endpoint, identifier, credential, dependency, staging,
 commit, push, or unrelated file change was made.
+
+## 2026-09-09 — R3 Phase 2 synthetic check-email implementation
+
+### Experiment result
+
+The frozen check-email-only experiment is implemented as an in-memory
+normalizer. It accepts only locally constructed trusted context plus bounded
+raw transport metadata/body bytes, derives transport classification, strictly
+validates the frozen XON success predicate, and passes a deterministic
+`fixture-response/1` envelope to the existing R2 adapter. It does not create
+requests or perform network I/O.
+
+The synthetic matrix covers successful findings, zero-finding rejection,
+echo/schema/parser/media/failure/body-state cases, exact duplicate names,
+transport construction rejection, the final-byte guard, and R1 guarding. No
+analytics behavior was implemented. No result establishes live API
+compatibility, upstream completeness, freshness, coverage, usefulness, or
+safety.
+
+### Boundary
+
+Only the selected Phase 2 adapter and synthetic fixture/test files were added;
+R1, R2, R2.5, the offline simulator, official-source records, and project
+decisions were not changed. No functional endpoint, identifier, credential,
+or archive repository was used.
+
+## 2026-09-09 — Verify R3 Phase 2 synthetic experiment
+
+### Exact final verification
+
+The complete implementation diff and status inspection preceded the final
+sequence:
+
+```text
+$ ./.venv/bin/python -m pytest
+============================= 199 passed in 6.87s ==============================
+
+$ ./.venv/bin/ruff format --check .
+31 files already formatted
+
+$ ./.venv/bin/ruff check .
+All checks passed!
+
+$ ./.venv/bin/mypy .
+Success: no issues found in 15 source files
+
+$ git diff --check
+(no output; exit 0)
+```
+
+The count increased from 147 to 199 through 52 new synthetic adapter tests;
+existing Python implementation files remained unchanged. This verifies only
+offline deterministic behavior and not live service compatibility or any
+upstream completeness/freshness claim.
+
+## 2026-09-09 — Final transport invariant correction and verification
+
+The frozen envelope now rejects retained headers on a pre-status failure,
+because no HTTP response headers can exist before a response status. The final
+verification sequence after this correction was:
+
+```text
+$ ./.venv/bin/python -m pytest
+============================= 199 passed in 6.44s ==============================
+
+$ ./.venv/bin/ruff format --check .
+31 files already formatted
+
+$ ./.venv/bin/ruff check .
+All checks passed!
+
+$ ./.venv/bin/mypy .
+Success: no issues found in 15 source files
+
+$ git diff --check
+(no output; exit 0)
+```
+
+The correction did not change the matrix outcomes or the 147-plus-52 test
+count. No live endpoint or identifier was used.
+
+## 2026-09-09 — R3 Phase 2 adversarial correction pass
+
+The selected implementation now catches bounded hostile JSON integer-conversion
+`ValueError` at the JSON boundary and returns R2 `unverifiable`. Simultaneous
+transport defects follow the newly frozen precedence in Section 12.4, with
+HTTP 400-or-greater taking failure precedence once a status exists. Exact
+non-BMP serialization evidence and adjacent body, field, collection, header
+count, and retained-header-byte boundaries are covered by synthetic tests.
+
+R1 tests now use distinct chronological IDs and assert `guarding_failed` or
+`guarding_unverifiable` as appropriate, with no baseline creation,
+disappearance, or exposure. No R1/R2 semantics or live-source behavior was
+changed.
+
+## 2026-09-09 — Verify R3 Phase 2 adversarial correction pass
+
+The complete corrected diff and status inspection preceded the final sequence:
+
+```text
+$ ./.venv/bin/python -m pytest -q
+207 passed in 6.09s
+
+$ ./.venv/bin/ruff format --check .
+31 files already formatted
+
+$ ./.venv/bin/ruff check .
+All checks passed!
+
+$ ./.venv/bin/mypy .
+Success: no issues found in 15 source files
+
+$ git diff --check
+(no output; exit 0)
+```
+
+The final suite includes 60 focused XON tests. No network-capable imports or
+calls, credentials, real identifiers, or functional endpoints were used.
+
+## 2026-09-09 — R3 Phase 2 final consistency corrections
+
+Section 14.1 now explicitly freezes oversized generated R2 envelopes as
+visible `R2EnvelopeTooLargeError` local construction rejection before R2,
+unreachable through the bounded selected XON path. The first-check R1 test
+also covers an after-status incomplete attempt and verifies
+`response_incomplete`, `guarding_unverifiable`, no baseline, and no exposure.
+The build record’s test arithmetic now states 147 pre-R3 tests plus 60 focused
+XON tests = 207 total.
+
+## 2026-09-09 — Verify R3 Phase 2 final consistency corrections
+
+Final verification passed: 207 tests in 6.19 seconds, 31 files formatted,
+Ruff lint passed, mypy passed for 15 source files, and `git diff --check`
+passed. The corrected research and tests remain offline and synthetic.
