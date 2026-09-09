@@ -1106,3 +1106,127 @@ XON tests = 207 total.
 Final verification passed: 207 tests in 6.19 seconds, 31 files formatted,
 Ruff lint passed, mypy passed for 15 source files, and `git diff --check`
 passed. The corrected research and tests remain offline and synthetic.
+
+## 2026-09-09 — Frame R3.5 visible synthetic XON scenarios
+
+### Research question
+
+Can the frozen synthetic XposedOrNot check-email transport and normalization
+boundary be exposed through the existing deterministic offline simulator so a
+human can observe transport attempt, XON classification, R2 SourceCheck, R1
+comparison, and exposure/guard/silence without duplicating logic or implying
+live-service compatibility?
+
+### Repository reconciliation
+
+The authoritative checkpoint is clean merge commit `35ef380` on the requested
+branch, with the implemented R1, R2, R2.5, and R3 synthetic experiments and
+207 passing tests. The older research specifications retain historical
+framing-status language; current source and append-only records determine what
+has actually run. No material contradiction was found.
+
+### Framing result
+
+Added `RESEARCH_003_5_VISIBLE_XON_SCENARIOS.md` only. It proposes a separate
+`r3.5-visible-xon-scenarios/1` scenario family so every existing R2.5 scenario
+file and output remains unchanged. The proposed runner dispatches by the
+trusted allowlisted adapter identity, calls the existing XON adapter and R2.5
+R2 path, constructs only local scan/check IDs, and passes every valid scan to
+the existing R1 comparator.
+
+The XON adapter has no separate public XON-classification record. The framing
+therefore defines only a non-semantic presentation projection from public
+transport classification plus the returned SourceCheck; it does not authorize
+a second XON parser. Raw transport metadata and body bytes are represented as
+bounded lowercase hex in the proposed scenarios, and malformed untrusted
+metadata remains adapter-classified rather than becoming invalid scenario
+input. Contradictory local TransportAttempt construction remains exit-code-2
+invalid input.
+
+The 17 proposed scenarios cover baseline silence, unchanged findings, new
+findings, valid omission-based disappearance, simultaneous findings,
+zero-finding rejection, HTTP 404/429/503 failures, malformed bodies and
+metadata, incomplete/over-limit bodies, echo mismatch, hostile unknown fields,
+overlong integers, local construction rejection, and mixed-source failure with
+an independently changing source.
+
+### Boundary
+
+No Phase 2 runner extension, scenario file, source change, test change,
+dependency, network request, credential, real identifier, persistence,
+notification, scheduler, analytics path, evidence archive change, staging,
+commit, push, merge, or live XposedOrNot work was performed. The editable
+install setuptools discovery issue remains separate work.
+
+### Decision boundary
+
+Stop for adversarial framing review. Do not implement the proposed Phase 2
+files or settle repeated-failure suppression, recovery events, disappearance
+confirmation, trivial-change suppression, bark grouping, baseline overload,
+minimum actionable bark information, or older-baseline selection.
+
+## 2026-09-09 — Verify R3.5 visible synthetic XON scenario framing
+
+### Verification observation
+
+The required repository checks passed: 207 tests; Ruff format check; Ruff
+lint; mypy with no issues in 15 source files; and `git diff --check`. The
+complete diff and status review found only the new R3.5 framing document and
+the permitted append-only research, build, and progress logs changed.
+
+### Boundary
+
+This verification confirms repository health at the existing checkpoint only.
+It does not claim that the proposed runner, scenario files, or XON scenarios
+have been implemented or executed. The branch remains unstaged and
+uncommitted, and work stops for adversarial framing review.
+
+## 2026-09-09 — Amend R3.5 framing after adversarial self-review
+
+The framing was tightened before handoff: all ledger shorthand now expands
+through complete R1 report macros; Scenario 10 explicitly covers a wrong
+Content-Type value; and Scenario 17 states the actual lexical source ordering.
+No implementation or semantic change was made.
+
+## 2026-09-09 — Verify amended R3.5 framing
+
+The final required verification passed after the framing corrections: 207
+tests, Ruff format check, Ruff lint, mypy, and `git diff --check`. The complete
+status review still shows only the new framing document and the three
+permitted append-only logs. The branch remains unstaged and uncommitted.
+
+## 2026-09-09 — Correct remaining R3.5 framing details
+
+The framing correction preserves the existing scenario family and ownership
+boundaries. It fixes the exact 5,088-byte hostile body, permits empty raw
+header names without loader pre-classification, freezes trusted source JSON
+types and literal examples, completes mixed-source human and machine
+projection semantics, freezes Scenario 16's diagnostic object and streams,
+defines the explicit filename-to-ID table, makes unexpected public XON
+statuses a visible internal projection failure, and records the required
+append-only Phase 2 files. No source, test, fixture, dependency, network, or
+live-service work was performed.
+
+## 2026-09-09 — Freeze R3.5 XON projection internal error
+
+The xon_projection_invariant contract is now fully frozen for R3.5 only. It
+applies when READY transport is followed by an adapter status other than
+completed or unverifiable; it discards buffered output, stops before R1 and
+later scans, returns exit 2, and emits the exact human or JSON internal-error
+form. It is not an invalid scenario and does not alter R2.5 diagnostics.
+Phase 2 must test both output modes with a public-adapter test double.
+
+## 2026-09-09 — Verify frozen R3.5 XON projection internal error
+
+The established verification sequence passed: pytest 207 passed in 6.57
+seconds, Ruff format reported 32 files already formatted, Ruff lint passed,
+mypy found no issues in 15 source files, and git diff --check passed. No
+implementation or internal-error test execution was performed.
+
+## 2026-09-09 — Verify corrected R3.5 framing
+
+The exact verification sequence passed: pytest 207 passed in 7.12 seconds,
+Ruff format 32 files already formatted, Ruff lint passed, mypy found no issues
+in 15 source files, and git diff --check passed. Complete diff inspection
+confirmed only the R3.5 framing document and the three permitted append-only
+logs changed. No scenario runner or scenario was implemented or executed.

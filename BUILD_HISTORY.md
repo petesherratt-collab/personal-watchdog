@@ -1477,3 +1477,217 @@ The complete corrected diff and status inspection preceded this final sequence:
 
 Final consistency corrections are verified and stopped for adversarial review
 without staging, commit, push, merge, or live-source work.
+
+## 2026-09-09 — Frame R3.5 visible synthetic XON scenarios
+
+### Objective
+
+Frame, without implementation, a visible end-to-end synthetic scenario
+experiment that dispatches the existing offline simulator to the committed R3
+check-email adapter and preserves R2.5, R2, and R1 ownership.
+
+### Changes
+
+**Directly verified:** Created `RESEARCH_003_5_VISIBLE_XON_SCENARIOS.md`.
+It reconciles the requested phase with merge commit `35ef380`, freezes a new
+`r3.5-visible-xon-scenarios/1` family, defines the transport envelope and
+lowercase-hex byte encoding, records exact bounds and diagnostics, specifies
+the 17 curated scenarios, and states the proposed Phase 2 files and
+delegation tests.
+
+The framing keeps transport classification and XON normalization in the
+existing R3 adapter, R2 as the only SourceCheck constructor, and R1 as the
+only owner of baseline, comparison, exposure, guarding, and disappearance.
+It records the observed immediate-prior ScanAttempt selection and the fact
+that a failed or unverifiable scan can displace an older successful state.
+
+### Verification
+
+Pending the final repository verification sequence and complete diff/status
+review. No implementation or scenario execution is claimed by this entry.
+
+### Decisions
+
+No project-level decision was added. The document stops at adversarial framing
+review and does not authorize Phase 2 implementation or live integration.
+
+### Gotchas
+
+- The committed R3 adapter exposes transport classification and SourceCheck,
+  but not an independent XON-classification record. The proposed output must
+  use a non-semantic projection rather than duplicate the XON parser.
+- Raw malformed or duplicate headers are valid untrusted transport metadata;
+  only contradictory locally constructed envelopes are invalid scenarios.
+- The editable-install setuptools package-discovery failure remains separate
+  work and was not fixed.
+
+### Status
+
+Documentation framing is complete pending verification. No files were staged,
+committed, pushed, merged, or implemented.
+
+## 2026-09-09 — Verify R3.5 visible synthetic XON scenario framing
+
+### Verification
+
+- `./.venv/bin/python -m pytest -q` — 207 passed.
+- `./.venv/bin/ruff format --check .` — 32 files already formatted.
+- `./.venv/bin/ruff check .` — all checks passed.
+- `./.venv/bin/mypy .` — no issues found in 15 source files.
+- `git diff --check` — passed.
+- Complete diff and status review found only the new framing document and the
+  three permitted append-only logs changed; no source, test, fixture, or
+  existing specification changed.
+
+### Gotchas
+
+- The verification run confirms the existing 207-test checkpoint; it does not
+  execute the proposed R3.5 scenarios because this phase is framing only.
+- The editable-install setuptools package-discovery issue remains separate
+  work and was not fixed.
+
+### Status
+
+R3.5 framing verification is complete. No files were staged, committed,
+pushed, merged, or implemented. Stop for adversarial framing review.
+
+## 2026-09-09 — Amend R3.5 framing after adversarial self-review
+
+### Changes
+
+- Added normative complete R1 report macros so every curated ledger row
+  expands to literal comparison, exposure, guarding, and silence assertions.
+- Added the missing wrong-Content-Type row to the metadata scenario.
+- Corrected Scenario 17’s stated comparison ordering to R1’s lexical source
+  ordering.
+
+### Gotchas
+
+- The framing document uses readable body and report aliases only as explicit
+  documentation macros; Phase 2 fixtures must expand them to literal bytes and
+  IDs.
+- The editable-install setuptools package-discovery issue remains separate
+  work and was not fixed.
+
+### Status
+
+The framing was tightened for adversarial review. No source, test, fixture,
+dependency, network, or Phase 2 implementation was added.
+
+## 2026-09-09 — Verify amended R3.5 framing
+
+### Verification
+
+- `./.venv/bin/python -m pytest -q` — 207 passed.
+- `./.venv/bin/ruff format --check .` — 32 files already formatted.
+- `./.venv/bin/ruff check .` — all checks passed.
+- `./.venv/bin/mypy .` — no issues found in 15 source files.
+- `git diff --check` — passed.
+- The final diff/status review still contains only the framing document and
+  the three permitted append-only logs; no source, test, fixture, or existing
+  specification changed.
+
+### Gotchas
+
+- The amended framing was not executed; verification remains against the
+  existing 207-test implementation checkpoint.
+- The editable-install setuptools package-discovery issue remains separate
+  work and was not fixed.
+
+### Status
+
+Amended R3.5 framing verification is complete. No files were staged,
+committed, pushed, merged, or implemented. Stop for adversarial framing
+review.
+
+## 2026-09-09 — Correct R3.5 framing contract details
+
+### Corrections
+
+- Corrected the bounded overlong-integer body to 5,088 bytes.
+- Permitted an empty raw header-name byte string while retaining the 64-byte
+  bound and adapter-owned malformed-header classification.
+- Froze exact JSON types and literal identities for XON and synthetic R2
+  sources.
+- Completed mixed-source input-size and human-output rules, Scenario 16's
+  exact invalid diagnostic, the filename-to-ID table, the exhaustive XON
+  presentation fallback, the derived-oracle wording, and the append-only
+  Phase 2 record-file list.
+
+### Gotchas
+
+- The framing remains unimplemented; verification can only exercise the
+  existing 207-test repository checkpoint.
+- The editable-install setuptools package-discovery issue remains separate
+  work and was not fixed.
+
+### Status
+
+Documentation-only correction pass. No source, test, fixture, dependency,
+network, staging, commit, push, merge, or Phase 2 implementation was added.
+
+## 2026-09-09 — Verify corrected R3.5 framing
+
+### Verification
+
+- ./.venv/bin/python -m pytest -q — 207 passed in 7.12s.
+- ./.venv/bin/ruff format --check . — 32 files already formatted.
+- ./.venv/bin/ruff check . — All checks passed!
+- ./.venv/bin/mypy . — Success: no issues found in 15 source files.
+- git diff --check — passed with no output.
+- Complete diff and status inspection confirmed only the R3.5 document and
+  three permitted append-only logs are changed.
+
+### Gotchas
+
+- Verification covers the existing implementation checkpoint only; the R3.5
+  scenario runner remains unimplemented and unexecuted.
+- The editable-install setuptools package-discovery issue remains separate
+  work and was not fixed.
+
+### Status
+
+The corrected framing is verified and stopped for final adversarial review.
+
+## 2026-09-09 — Freeze R3.5 XON projection internal error
+
+### Corrections
+
+Frozen the R3.5-only xon_projection_invariant fallback: READY transport plus
+an adapter status other than completed or unverifiable produces the exact
+human or JSON internal-error output, exit 2, discarded buffered normal
+output, no XON/R1 result, and no later scans. R2.5 diagnostic behavior is
+unchanged, and a Phase 2 test double is required to exercise both output
+forms.
+
+### Gotchas
+
+- This is an internal runner invariant, not an invalid scenario or source
+  result.
+- The R3.5 runner remains unimplemented and unexecuted.
+
+### Status
+
+Documentation-only correction. No source, test, fixture, dependency, network,
+staging, commit, push, merge, or Phase 2 implementation was added.
+
+## 2026-09-09 — Verify frozen R3.5 XON projection internal error
+
+### Verification
+
+- ./.venv/bin/python -m pytest -q — 207 passed in 6.57s.
+- ./.venv/bin/ruff format --check . — 32 files already formatted.
+- ./.venv/bin/ruff check . — All checks passed!
+- ./.venv/bin/mypy . — Success: no issues found in 15 source files.
+- git diff --check — passed with no output.
+
+### Gotchas
+
+- The internal-error fallback was documented only; no test double or runner
+  execution was added in this framing phase.
+
+### Status
+
+Verification passed. Nothing was staged, committed, pushed, merged, or
+implemented.
+Nothing was staged, committed, pushed, merged, or implemented.
