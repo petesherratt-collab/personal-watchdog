@@ -1691,3 +1691,97 @@ staging, commit, push, merge, or Phase 2 implementation was added.
 Verification passed. Nothing was staged, committed, pushed, merged, or
 implemented.
 Nothing was staged, committed, pushed, merged, or implemented.
+
+## 2026-09-09 — Implement R3.5 visible synthetic XON scenarios
+
+### Implementation
+
+- Added exact-version R3.5 dispatch to the offline simulator while preserving
+  the R2.5 branch and its output contract.
+- Added the 17 literal curated scenario files, scenario helpers, and focused
+  tests. The runner delegates transport/XON normalization to the committed
+  XON adapter, synthetic-R2 checks to R2, and comparison, baselines, guards,
+  exposures, disappearance, and ordering to R1.
+- Implemented the frozen human and canonical JSON projections, exit codes,
+  expectation mismatches, invalid construction diagnostics, and the
+  R3.5-only `xon_projection_invariant` internal error path.
+
+### Gotchas
+
+- The editable-install setuptools package-discovery issue remains separate
+  work and was not fixed.
+- Scenario 16 is deliberately invalid input and exits 2; it is not a source
+  result. The other 16 curated scenarios pass in both output modes.
+- This proves deterministic synthetic delegation only; it does not establish
+  live XposedOrNot compatibility, freshness, completeness, or coverage.
+
+### Status
+
+Phase 2 implementation is complete and remains unstaged, uncommitted, and
+unpushed for adversarial implementation review.
+
+## 2026-09-09 — Verify R3.5 visible synthetic XON scenarios
+
+### Verification
+
+- `./.venv/bin/python -m pytest -q` — 242 passed in 13.41s.
+- `./.venv/bin/ruff format --check .` — 34 files already formatted.
+- `./.venv/bin/ruff check .` — All checks passed!
+- `./.venv/bin/mypy .` — Success: no issues found in 17 source files.
+- `git diff --check` — passed with no output.
+- All 16 valid curated scenarios passed in human and JSON modes with exit 0;
+  Scenario 16 returned its exact human and JSON exit-2 contracts.
+
+### Gotchas
+
+- No network-capable imports or calls, credentials, real identifiers, or live
+  endpoints were used.
+- The editable-install setuptools package-discovery issue remains separate
+  work and was not fixed.
+
+### Status
+
+Verification passed. No files were staged, committed, pushed, or merged.
+
+## 2026-09-09 — Final R3.5 Phase 2 verification correction
+
+### Verification
+
+- `./.venv/bin/python -m pytest -q` — 243 passed in 13.88s.
+- `./.venv/bin/ruff format --check .` — 34 files already formatted.
+- `./.venv/bin/ruff check .` — All checks passed!
+- `./.venv/bin/mypy .` — Success: no issues found in 17 source files.
+- `git diff --check` — passed with no output.
+
+### Gotchas
+
+- This final count includes the completed R3.5 implementation and focused
+  tests; the earlier 242-test entry predates the final focused assertions.
+- The editable-install setuptools package-discovery issue remains separate
+  work and was not fixed.
+
+### Status
+
+Final verification passed. The work remains unstaged, uncommitted, and
+unpushed for adversarial implementation review.
+
+## 2026-09-09 — Final verification after R3.5 invalid-family correction
+
+### Verification
+
+- `./.venv/bin/python -m pytest -q` — 243 passed in 13.45s.
+- `./.venv/bin/ruff format --check .` — 34 files already formatted.
+- `./.venv/bin/ruff check .` — All checks passed!
+- `./.venv/bin/mypy .` — Success: no issues found in 17 source files.
+- `git diff --check` — passed with no output.
+
+### Gotchas
+
+- R3.5 parser diagnostics now retain the R3.5 runner version even when
+  validation fails before a scenario object can be constructed.
+- The editable-install setuptools package-discovery issue remains separate
+  work and was not fixed.
+
+### Status
+
+Verification passed. No files were staged, committed, pushed, or merged.

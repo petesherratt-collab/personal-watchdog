@@ -704,3 +704,33 @@ The established verification sequence passed: 207 tests in 6.57 seconds,
 32 files already formatted, Ruff lint passed, mypy found no issues in 15
 source files, and git diff --check passed. The fallback remains documentation
 only and was not executed.
+
+## 2026-09-09 — R3.5 Phase 2 implementation complete
+
+The visible synthetic XON scenario experiment is implemented within the
+frozen Phase 2 boundary. The simulator dispatches only the exact R3.5
+scenario version and allowlisted adapter identities, preserves R2.5 behavior,
+and exposes transport, XON, R2, and R1 projections without duplicating their
+semantics. The 17 required scenarios and focused delegation/diagnostic tests
+are present. No live request, identifier, credential, or network operation was
+used.
+
+## 2026-09-09 — R3.5 Phase 2 verification
+
+242 tests passed; Ruff format and lint passed; mypy passed; and
+`git diff --check` passed. The valid curated scenario set passed in both
+output modes, Scenario 16 remained an invalid construction result, and the
+branch is left unstaged and uncommitted for adversarial implementation review.
+
+## 2026-09-09 — Final R3.5 Phase 2 verification correction
+
+The final verification run passed with 243 tests, 34 formatted files, clean
+Ruff lint, clean mypy across 17 source files, and clean `git diff --check`.
+The previous 242-test record remains unchanged as historical output from the
+earlier focused-test set.
+
+## 2026-09-09 — Final verification after invalid-family correction
+
+The final verification passed: 243 tests, 34 files already formatted, clean
+Ruff lint, clean mypy across 17 source files, and clean `git diff --check`.
+The implementation remains uncommitted and ready for adversarial review.

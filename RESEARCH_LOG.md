@@ -1230,3 +1230,36 @@ Ruff format 32 files already formatted, Ruff lint passed, mypy found no issues
 in 15 source files, and git diff --check passed. Complete diff inspection
 confirmed only the R3.5 framing document and the three permitted append-only
 logs changed. No scenario runner or scenario was implemented or executed.
+
+## 2026-09-09 — Execute R3.5 synthetic scenario experiment
+
+Implemented the frozen visible scenario runner and 17 literal synthetic XON
+scenario records. The XON transport attempt is constructed locally and passed
+unchanged to the committed adapter; synthetic-R2 inputs use the existing R2
+normalizer; R1 remains the sole owner of comparison and event semantics. The
+experiment covers valid baselines, unchanged/new/disappeared findings,
+failure and incomplete precedence, malformed and hostile bodies, metadata
+rejection, immediate-prior displacement, mixed-source change, and visible
+construction rejection. It makes no claim about live service behavior.
+
+## 2026-09-09 — Verify R3.5 synthetic scenario experiment
+
+The full suite passed with 242 tests. All 16 valid curated scenarios passed in
+both human and JSON modes; Scenario 16 produced the frozen exit-2 result; and
+controlled mismatch, invalid-input, delegation, byte-count, canonical-output,
+and internal-invariant tests passed. No network or live-source operation was
+performed.
+
+## 2026-09-09 — Final R3.5 Phase 2 verification correction
+
+After the final focused delegation and identity-type assertions were added,
+the exact verification sequence passed with 243 tests; Ruff format and lint,
+mypy, and `git diff --check` all passed. The earlier 242-test verification
+entry is retained as history and is superseded by this final run.
+
+## 2026-09-09 — Final verification after R3.5 invalid-family correction
+
+The final exact sequence passed with 243 tests in 13.45 seconds; Ruff format
+and lint passed, mypy passed across 17 source files, and `git diff --check`
+passed. The invalid R3.5 diagnostic path now reports the R3.5 runner version
+even when parsing fails before dispatch.
