@@ -661,3 +661,314 @@ nor product usefulness.
 
 Stop for adversarial review. Do not stage, commit, push, modify R1/R2, or
 begin R3.
+
+## 2026-09-08 — Frame R3 Phase 1 XposedOrNot contract research
+
+### Research question
+
+Can the currently documented official XposedOrNot API contract be mapped
+through the existing R2 adapter boundary and R1 comparison semantics without
+turning transport, authentication, authorization, rate-limit, service, HTTP,
+content-type, schema, parsing, timeout, partial-response, or ambiguity
+failures into completed-empty or disappearance?
+
+### Scope and provenance
+
+Read the repository-authoritative R1/R2/R2.5 documents, implementation, tests,
+fixtures, and policy records before research. Examined only official
+XposedOrNot documentation and official repositories, on 2026-09-08:
+
+- the official API documentation at `https://xposedornot.com/api_doc`, whose
+  page identifies the API Quick Reference as last updated 2026-06-03;
+- the official API repository README at
+  `https://github.com/XposedOrNot/XposedOrNot-API`, whose `master` history
+  showed current commit prefix `b394f21`;
+- the official Python SDK README and the `client.py` and email-endpoint files
+  at `https://github.com/XposedOrNot/XposedOrNot-Python`; and
+- the official JavaScript SDK README at
+  `https://github.com/XposedOrNot/XposedOrNot-JS`.
+
+No XposedOrNot API endpoint was called, and no identifier, credential, or
+password was submitted.
+
+### Observations
+
+- The official documentation identifies keyless free email, analytics,
+  password, catalogue, and key-authorized domain routes, with a separate
+  Plus API described by the official SDKs.
+- The free email found example contains breach arrays, an email echo, and a
+  success status. The documented free no-result body contains an `Error`
+  string and null email but does not state its HTTP status.
+- The same official documentation assigns HTTP 404 to input/no-data errors,
+  while the official Python client maps 404 to `NotFoundError`.
+- The official documentation names the optional free lookup query `details`,
+  while the official Python client sends `include_details`.
+- The website publishes 2 requests/second plus hourly/daily caps; the official
+  SDKs describe 1-request/second client spacing and retries. This is preserved
+  as a documentation/client-behavior conflict.
+- Analytics documents an explicit HTTP 200 all-null no-result shape. No
+  equivalent unambiguous empty contract was documented for the free email
+  body, password body, catalogue, or domain report.
+- No official source examined specifies a closed schema, content type/charset,
+  maximum response size, pagination, truncation marker, ordering, duplicate
+  behavior, or freshness/completeness signal for the selected free lookup.
+
+### Result
+
+`RESEARCH_003_XPOSEDORNOT_CONTRACT.md` records a conservative mapping. A
+later synthetic adapter experiment is justified as a boundary test only if it
+freezes a narrower schema and maps ambiguity, malformed output, partial data,
+auth, rate limits, server failures, and timeouts to failed, unverifiable, or
+incomplete. The documentation is not sufficient to authorize a live adapter or
+to treat the free email no-result body as completed-empty.
+
+### Decision boundary
+
+No project-level decision was established, so `DECISIONS.md` remains
+unchanged. Stop for adversarial review. Do not implement an adapter, add an
+HTTP client, make a live request, add a dependency, use credentials, or begin
+R4.
+
+## 2026-09-08 — Verify R3 Phase 1 XposedOrNot contract research
+
+### Verification observation
+
+- Full pytest suite: 147 passed.
+- Ruff format check: 28 files already formatted.
+- Ruff lint: all checks passed.
+- mypy: success, no issues found in 12 source files.
+- `git diff --check`: passed.
+- Complete diff inspection found only `RESEARCH_003_XPOSEDORNOT_CONTRACT.md`
+  and the three permitted append-only history/log files changed or added.
+
+These checks validate repository hygiene and preserve the existing synthetic
+R1/R2/R2.5 behavior. They do not execute a live XposedOrNot request or prove
+the official service contract.
+
+### Decision boundary
+
+Stop for adversarial review without staging, committing, pushing, implementing
+the adapter, or making a live request.
+
+## 2026-09-08 — Correct R3 Phase 1 contract framing after OpenAPI review
+
+### Correction scope
+
+The official API repository README identifies `https://api.xposedornot.com/docs`
+and `https://api.xposedornot.com/openapi.json` as the current Swagger/OpenAPI
+artifacts. They were accessed for documentation only. No Swagger action or
+functional XposedOrNot lookup endpoint was called.
+
+The specification reports OpenAPI `3.0.0`, API specification version `2.0.0`,
+and production server `https://api.xposedornot.com`. It resolves the free
+check-email query name as `include_details`, documents `application/json` for
+the two email-family 200 responses, and specifies email-format parameters and
+selected 200/404 statuses. It does not close the schemas, require their
+properties, define the analytics no-match body, or resolve charset, size,
+pagination, truncation, ordering, duplicate, freshness, or completeness
+behavior. Its free 404 schema also conflicts with the website’s null email
+example; these facts remain separate.
+
+### Reproducible source pins
+
+The mutable GitHub URLs in the earlier entry are historical only. The current
+source register is pinned to full SHAs and immutable file permalinks:
+
+- API README: `cbf5423ed601bd74d896efebd0d28c637a6cddef`, [commit-pinned file](https://github.com/XposedOrNot/XposedOrNot-API/blob/cbf5423ed601bd74d896efebd0d28c637a6cddef/README.md).
+- Python SDK README, client, and email endpoint: `911f49aa08939827d4717f3d48fd192c0c072c29`, [README](https://github.com/XposedOrNot/XposedOrNot-Python/blob/911f49aa08939827d4717f3d48fd192c0c072c29/README.md), [client](https://github.com/XposedOrNot/XposedOrNot-Python/blob/911f49aa08939827d4717f3d48fd192c0c072c29/xposedornot/client.py), [email endpoint](https://github.com/XposedOrNot/XposedOrNot-Python/blob/911f49aa08939827d4717f3d48fd192c0c072c29/xposedornot/endpoints/email.py).
+- JavaScript SDK README: `d4cf1af21a53c32c03d767a59d382b01b4a21908`, [commit-pinned file](https://github.com/XposedOrNot/XposedOrNot-JS/blob/d4cf1af21a53c32c03d767a59d382b01b4a21908/README.md).
+
+### Endpoint-family and boundary correction
+
+Free check-email and breach-analytics are now explicitly distinct source
+contracts. The proposed first synthetic experiment selects only keyless
+`GET /v1/check-email/{email}` with `include_details=false`, source identity
+`xposedornot.free.check-email`, and schema `xon-check-email/1`. Analytics has
+source identity `xposedornot.free.breach-analytics`, scope
+`GET /v1/breach-analytics?email={email}`, and schema
+`xon-breach-analytics/1`; it is deferred and has a separate matrix.
+
+The documented analytics no-match fixture is now named
+`XON_ANALYTICS_HTTP_200_NO_MATCH_V1`. Its exact synthetic predicate is HTTP
+200, normalized `application/json`, complete strict JSON, exactly six
+top-level keys, and values:
+
+```text
+BreachMetrics: null
+BreachesSummary: {"site": ""}
+ExposedBreaches: null
+ExposedPastes: null
+PasteMetrics: null
+PastesSummary: {"cnt": 0, "domain": "", "tmpstmp": ""}
+```
+
+The two non-null empty summary objects are part of the predicate. Only this
+predicate under the analytics source identity may become `completed-empty`.
+
+The later synthetic transport envelope now explicitly separates HTTP status,
+normalized content type, bounded allowlisted headers, complete or bounded
+body bytes, body state, transport/timeout failure, and locally trusted source
+context. HTTP metadata is untrusted transport metadata. Transport
+classification precedes XON normalization; XON normalization precedes the
+existing R2 bytes-first validator; R1 receives only the resulting
+`SourceCheck` and retains comparison/disappearance ownership.
+
+Exact duplicate handling follows existing R2: equal duplicate observations are
+deterministically deduplicated with `duplicate_finding_key_deduplicated`,
+while conflicting duplicates are `unverifiable` with no observations. No
+contradictory XON duplicate rule is added.
+
+The record-file scope is four tracked files: `BUILD_HISTORY.md`,
+`PROGRESS_LOG.md`, `REFERENCES.md`, and `RESEARCH_LOG.md`. The earlier “three”
+wording is superseded by this correction without rewriting earlier history.
+
+## 2026-09-08 — Verify corrected R3 Phase 1 framing
+
+### Exact verification commands and outputs
+
+```text
+$ .venv/bin/python -m pytest
+============================= 147 passed in 6.01s =============================
+
+$ .venv/bin/ruff format --check .
+28 files already formatted
+
+$ .venv/bin/ruff check .
+All checks passed!
+
+$ .venv/bin/mypy .
+Success: no issues found in 12 source files
+
+$ git diff --check
+(no output; exit 0)
+```
+
+The Ruff count is 28 rather than the R2.5 record’s 27 because Ruff’s
+configured include set formats Markdown as well as Python, and the new R3
+research document is now one additional included file. The R2.5 commit and
+the current worktree both contain the same 12 Python files; no Python source
+file was added or changed. The mypy count is therefore unchanged at 12.
+
+### Final boundary
+
+Complete diff inspection and status review remain required before handoff.
+No endpoint, identifier, credential, adapter, HTTP client, dependency,
+staging, commit, push, or external archive change was performed.
+
+## 2026-09-08 — Final R3 Phase 1 framing verification
+
+### Verification ordering
+
+The complete diff and status inspection was performed before this verification
+sequence. The research document contained only Sections 1–22, and no
+implementation paths were changed.
+
+### Exact final commands and outputs
+
+```text
+$ .venv/bin/python -m pytest
+============================= 147 passed in 6.01s =============================
+
+$ .venv/bin/ruff format --check .
+28 files already formatted
+
+$ .venv/bin/ruff check .
+All checks passed!
+
+$ .venv/bin/mypy .
+Success: no issues found in 12 source files
+
+$ git diff --check
+(no output; exit 0)
+```
+
+The earlier 5.98-second pytest report and this 6.01-second report are
+separate successful runs of the unchanged 147-test suite; the runtime
+difference is execution variance, not a behavioral change. This entry records
+the exact final run.
+
+### Boundary
+
+No adapter, identifier, credential, functional endpoint, staging, commit, or
+push was used. Stop for final adversarial review.
+
+## 2026-09-09 — Final R3 Phase 1 contract-gap correction
+
+### Scope
+
+Perform documentation/framing correction only. The repository-authoritative
+branch and complete pre-correction diff were inspected first. Only the R3
+research document and the four append-only record files are in scope.
+
+### Corrections recorded
+
+- The selected check-email mapping cannot generate a conflicting duplicate:
+  exact breach names deterministically produce the same finding key, kind,
+  locator, and empty material. That fixture was removed from
+  `XON_CHECK_EMAIL_MATRIX_V1`. Generic R2 conflicting-duplicate tests remain
+  the boundary protection; exact duplicate names still exercise R2
+  deterministic deduplication.
+- The analytics matrix is now
+  `XON_ANALYTICS_SENTINEL_REJECTION_MATRIX_V1`. It freezes only
+  `XON_ANALYTICS_HTTP_200_NO_MATCH_V1` and rejection cases. Analytics
+  positive-success normalization requires separate future framing and is not
+  part of the selected implementation files.
+- Content-Type derivation now trims only ASCII space/tab at both ends, rejects
+  non-ASCII values and all parameters, compares ASCII case-insensitively to
+  exactly `application/json`, rejects duplicate header names before derivation,
+  and defines the retained-header byte sum as name bytes + one colon byte +
+  value bytes + one line-feed byte per entry, capped at 8,192 bytes.
+- Normalized R2 serialization is fixed to UTF-8, compact separators,
+  deterministic object construction/key ordering, `ensure_ascii=True`
+  escaping, no non-standard numbers, final-byte measurement, and no R2 call
+  above 65,536 bytes. The verified bounds remain 13,918 XON bytes and 25,910
+  normalized-R2 bytes.
+- `TransportAttempt` now distinguishes before-status failure, after-status
+  body read failure/timeout with preserved HTTP status and bounded prefix,
+  complete response, and over-limit response. Contradictory local fixtures or
+  trusted fields reject as construction errors; valid attempts with malformed
+  untrusted metadata classify conservatively.
+- Every selected check-email matrix row now records transport, XON, and R2
+  outcomes or visible construction rejection. R1 remains the sole owner of
+  comparison, exposure, guarding, and disappearance.
+
+### Boundary
+
+No functional XposedOrNot request, identifier, credential, adapter, HTTP
+client, dependency, persistence, scheduler, notification, evidence archive,
+R1/R2/R2.5 modification, staging, commit, or push was performed.
+
+## 2026-09-09 — Verify final R3 Phase 1 contract-gap correction
+
+### Verification ordering
+
+The complete requested diff inspection and status review preceded this final
+verification sequence.
+
+### Exact final commands and outputs
+
+```text
+$ ./.venv/bin/python -m pytest
+============================= 147 passed in 6.08s =============================
+
+$ ./.venv/bin/ruff format --check .
+28 files already formatted
+
+$ ./.venv/bin/ruff check .
+All checks passed!
+
+$ ./.venv/bin/mypy .
+Success: no issues found in 12 source files
+
+$ git diff --check
+(no output; exit 0)
+```
+
+Earlier 5.98s, 6.01s, and this 6.08s pytest outputs are separate successful
+runs of the same 147-test suite; their timing differences are execution
+variance, not behavior changes.
+
+### Boundary
+
+No adapter, functional endpoint, identifier, credential, dependency, staging,
+commit, push, or unrelated file change was made.
