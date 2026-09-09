@@ -1018,3 +1018,462 @@ Verification is limited to deterministic synthetic offline scenarios and local
 tests. It does not establish live-source truth or product usefulness. Stop for
 adversarial review without staging, committing, pushing, modifying R1/R2, or
 beginning R3.
+
+## 2026-09-08 — Frame R3 Phase 1 XposedOrNot contract research
+
+### Objective
+
+Research the documented official XposedOrNot contract and frame a conservative
+synthetic adapter experiment without implementing an adapter or making a live
+request.
+
+### Changes
+
+**Directly verified:** Added `RESEARCH_003_XPOSEDORNOT_CONTRACT.md`. It records
+official endpoint and request facts, authentication and quota behavior, HTTP
+status classes, documented response shapes, empty-result distinctions,
+official-source conflicts, missing protocol guarantees, threat/ambiguity
+handling, R2 mapping, trusted-context ownership, a provisional finding model,
+later file boundaries, a frozen synthetic test matrix, and conclusion
+criteria.
+
+**Directly verified:** Appended this research result to `RESEARCH_LOG.md` and
+preserved `DECISIONS.md` unchanged because the work does not establish a
+project-level decision.
+
+**Boundary:** No XposedOrNot endpoint was called. No identifier, credential,
+password, HTTP client, dependency, adapter, persistence, evidence archive,
+scheduler, notification, R1/R2/R2.5 change, or external archive change was
+made.
+
+### Gotchas
+
+- The official sources do not form one unambiguous wire contract: the free
+  email no-result status is unspecified while 404 is documented as no data or
+  input error; the website and Python SDK name different detail parameters;
+  and the website and SDKs publish different request-spacing numbers.
+- No official maximum response size, pagination, duplicate policy, ordering
+  guarantee, exact content type/charset, or freshness/completeness marker was
+  found. These omissions are unknowns, not permission to accept a clean empty
+  result.
+- The existing R2 `completed-empty` meaning is narrower than a parseable HTTP
+  200 body. Only the explicitly documented analytics all-null 200 shape is
+  proposed as a genuine empty fixture; free email `Error: Not found` remains
+  conservative failure or unverifiable.
+
+### Status
+
+R3 Phase 1 is documentation research and experimental framing only. The later
+synthetic adapter experiment remains approval-gated. Stop for adversarial
+review without staging, committing, pushing, or implementing the adapter.
+
+## 2026-09-08 — Verify R3 Phase 1 XposedOrNot contract research
+
+### Verification
+
+- Full pytest suite: 147 passed.
+- Ruff format check: 28 files already formatted.
+- Ruff lint: all checks passed.
+- mypy: success, no issues found in 12 source files.
+- `git diff --check`: passed.
+- Complete diff inspection found only the R3 research document and the three
+  permitted append-only history/log files changed or added.
+
+The checks validate the repository and existing synthetic behavior only. No
+XposedOrNot endpoint was called, and no live protocol or source truth was
+verified.
+
+### Gotchas
+
+- None observed beyond the official documentation conflicts and missing
+  protocol guarantees already recorded in the preceding R3 entry.
+
+### Status
+
+R3 Phase 1 remains documentation-only and stopped for adversarial review.
+Nothing was staged, committed, pushed, or implemented.
+
+## 2026-09-08 — Correct R3 Phase 1 XposedOrNot framing
+
+### Objective
+
+Revise only the R3 documentation framing after examining the official Swagger
+UI and OpenAPI JSON artifacts. Preserve the no-adapter, no-live-request
+boundary.
+
+### Changes
+
+- Recorded `/docs` and `/openapi.json` provenance, OpenAPI/API versions, the
+  facts they resolve, and the gaps or conflicts they leave unresolved.
+- Pinned every official GitHub source used by R3 to a full commit SHA and
+  immutable file permalink.
+- Separated free check-email and breach-analytics into distinct source
+  identities, scopes, schema versions, and matrices; selected free check-email
+  as the sole first synthetic experiment.
+- Named and structurally defined `XON_ANALYTICS_HTTP_200_NO_MATCH_V1`,
+  preserving its non-null empty summary objects.
+- Defined the synthetic transport-attempt envelope and its transport → XON →
+  R2 → R1 ownership boundary without adding an HTTP client.
+- Corrected exact-duplicate handling to use existing R2 deterministic
+  deduplication and conflict rejection.
+- Corrected the record-file count to four tracked files:
+  `BUILD_HISTORY.md`, `PROGRESS_LOG.md`, `REFERENCES.md`, and
+  `RESEARCH_LOG.md`.
+
+### Boundary
+
+No functional lookup endpoint, identifier, credential, password, adapter,
+HTTP client, dependency, persistence, evidence archive, scheduler,
+notification, R1/R2/R2.5 code, staging, commit, push, or external archive
+change was made.
+
+### Gotchas
+
+- OpenAPI version `2.0.0` is specification metadata, not proof of data
+  freshness or a closed response contract.
+- OpenAPI does not define the analytics no-match predicate and conflicts with
+  website examples on several nullable/type details.
+- The selected check-email family has no documented genuine empty-success
+  response; the analytics sentinel is deliberately a separate deferred test.
+
+### Status
+
+Documentation correction appended. Stop for verification and adversarial
+review; the synthetic implementation remains approval-gated.
+
+## 2026-09-08 — Verify corrected R3 Phase 1 framing
+
+### Verification
+
+Exact commands and outputs:
+
+- `.venv/bin/python -m pytest` — `147 passed in 6.01s`.
+- `.venv/bin/ruff format --check .` — `28 files already formatted`.
+- `.venv/bin/ruff check .` — `All checks passed!`.
+- `.venv/bin/mypy .` — `Success: no issues found in 12 source files`.
+- `git diff --check` — no output; exit 0.
+
+The Ruff count increased from the R2.5 record’s 27 to 28 because Ruff’s
+configured include set includes Markdown and the R3 research document is now
+included. The R2.5 commit and current worktree both have 12 Python files, so
+there was no Python source change; mypy remains 12.
+
+### Gotchas
+
+- OpenAPI remains an open, partially conflicting specification; it does not
+  establish a live response guarantee.
+- The first synthetic experiment remains check-email only. Analytics remains a
+  separate deferred family.
+
+### Status
+
+All requested local verification passed. Stop for adversarial review without
+staging, committing, pushing, implementing, or making a live request.
+
+## 2026-09-08 — Final R3 Phase 1 framing verification
+
+### Verification
+
+The complete diff and status inspection preceded this final sequence. Exact
+commands and outputs were:
+
+- `.venv/bin/python -m pytest` — `147 passed in 6.01s`.
+- `.venv/bin/ruff format --check .` — `28 files already formatted`.
+- `.venv/bin/ruff check .` — `All checks passed!`.
+- `.venv/bin/mypy .` — `Success: no issues found in 12 source files`.
+- `git diff --check` — no output; exit 0.
+
+The earlier 5.98-second pytest report and this 6.01-second run are separate
+successful executions of the same 147-test suite. The timing difference is
+runtime variance; no Python source or behavior changed.
+
+### Gotchas
+
+- None beyond the documented official-source conflicts and unspecified live
+  protocol guarantees.
+
+### Status
+
+Final R3 Phase 1 framing is complete and stopped for adversarial review.
+
+## 2026-09-09 — Final R3 Phase 1 contract-gap correction
+
+### Objective
+
+Correct the remaining R3 framing gaps without implementing Phase 2 or changing
+R1, R2, R2.5, or the offline simulator.
+
+### Changes
+
+- Removed the impossible conflicting-duplicate fixture from the selected
+  check-email matrix. Exact duplicate breach names still exercise existing R2
+  deterministic deduplication; conflicting duplicates remain generic R2 test
+  protection only.
+- Reframed analytics as deferred sentinel-and-rejection research. Its positive
+  success schema is not frozen and requires future framing before any
+  implementation.
+- Defined exact content-type derivation, optional whitespace handling,
+  ASCII-case comparison, parameter rejection, malformed/non-ASCII handling,
+  duplicate-header rejection, and the retained-header byte formula.
+- Froze compact UTF-8 normalized-R2 serialization and the pre-R2 byte-limit
+  guard while preserving the 13,918-byte XON and 25,910-byte normalized-R2
+  calculations.
+- Added before-status and after-status transport failure phases so a post-
+  status read failure or timeout preserves the known HTTP status and remains
+  incomplete and non-comparable.
+- Expanded every selected check-email matrix row with transport, XON, and R2
+  outcomes or visible construction rejection.
+
+### Boundary
+
+No functional endpoint, identifier, credential, adapter, HTTP client,
+dependency, persistence, scheduler, notification, evidence archive, staging,
+commit, push, or unrelated file change was made.
+
+### Gotchas
+
+- A conflicting duplicate cannot be generated by the selected XON mapping
+  because the exact breach name determines all R2 identity/material fields.
+- Analytics positive-success normalization remains intentionally undefined and
+  implementation-blocked.
+- Harness construction errors remain visible construction failures; only valid
+  transport attempts with untrusted malformed metadata receive conservative
+  source classifications.
+
+### Status
+
+Documentation-only correction appended. Stop after verification for final
+adversarial review.
+
+## 2026-09-09 — Verify final R3 Phase 1 contract-gap correction
+
+### Verification
+
+The complete requested diff inspection and status review preceded this final
+verification sequence. Exact commands and outputs were:
+
+- `./.venv/bin/python -m pytest` — `147 passed in 6.08s`.
+- `./.venv/bin/ruff format --check .` — `28 files already formatted`.
+- `./.venv/bin/ruff check .` — `All checks passed!`.
+- `./.venv/bin/mypy .` — `Success: no issues found in 12 source files`.
+- `git diff --check` — no output; exit 0.
+
+### Gotchas
+
+- No new contradiction was found. The selected XON matrix excludes
+  conflicting duplicates because that state is not constructible under its
+  deterministic mapping; generic R2 protection remains separate.
+- Analytics positive-success normalization remains future framing work.
+
+### Status
+
+Documentation-only correction verified. Stop for final adversarial review
+without implementation, staging, commit, or push.
+
+## 2026-09-09 — Implement R3 Phase 2 synthetic XON check-email experiment
+
+### Objective
+
+Implement only the frozen deterministic check-email experiment from R3 Phase 1
+after confirming the exact Phase 1 HEAD, upstream branch, and clean starting
+tree.
+
+### Changes
+
+- Added the standard-library-only in-memory `TransportAttempt` and bounded raw
+  `Header` contract, including trusted-context validation, exact header
+  accounting, content-type derivation, and distinct transport failure/body
+  states.
+- Added check-email-only XON normalization with strict UTF-8/JSON validation,
+  exact schema and echo checks, bounded NFC strings, no completed-empty path,
+  deterministic breach candidates, and existing R2 deduplication.
+- Added deterministic compact ASCII-escaped R2 serialization with the final
+  byte guard before calling the existing R2 adapter.
+- Added synthetic fixtures and tests for every constructible selected matrix
+  row, R1 guarding/disappearance protection, size bounds, and absence of
+  network-capable imports.
+
+### Boundary
+
+No functional request, identifier submission, credential, HTTP client,
+analytics implementation, persistence, scheduler, notification, archive,
+dependency, R1/R2/R2.5 modification, staging, commit, or push was made.
+Verification proves only deterministic synthetic behavior, not live
+XposedOrNot compatibility, completeness, freshness, coverage, usefulness, or
+safety.
+
+### Gotchas
+
+- The selected check-email contract has no completed-empty result; zero valid
+  findings remain unverifiable.
+- Post-status read failures preserve the received HTTP status but become
+  incomplete and never parse a retained prefix.
+- Exact duplicate breach names are intentionally delegated to generic R2
+  deterministic deduplication; conflicting XON duplicates are not constructible.
+
+### Status
+
+Implementation is complete pending the final full verification sequence and
+adversarial implementation review.
+
+## 2026-09-09 — Verify R3 Phase 2 synthetic experiment
+
+### Verification
+
+The complete implementation diff and status inspection preceded this final
+verification sequence. Exact commands and outputs were:
+
+- `./.venv/bin/python -m pytest` — `199 passed in 6.87s`.
+- `./.venv/bin/ruff format --check .` — `31 files already formatted`.
+- `./.venv/bin/ruff check .` — `All checks passed!`.
+- `./.venv/bin/mypy .` — `Success: no issues found in 15 source files`.
+- `git diff --check` — no output; exit 0.
+
+The R2.5 checkpoint contained 147 tests. The final count is 199 because this
+phase adds 52 synthetic XON adapter tests; no existing R1, R2, R2.5, or offline
+simulator Python file was changed.
+
+### Gotchas
+
+- Verification covers only deterministic synthetic behavior. It does not prove
+  live XposedOrNot compatibility, completeness, freshness, coverage,
+  usefulness, or safety.
+- No network-capable import or call was added; no functional endpoint was used.
+
+### Status
+
+R3 Phase 2 synthetic implementation is verified and stopped for adversarial
+implementation review without staging, commit, push, merge, or live work.
+
+## 2026-09-09 — Final transport invariant correction and verification
+
+### Correction
+
+Pre-status failures now reject retained headers as contradictory local
+envelopes: without an HTTP status, no response headers can be present. The
+selected outcome mappings and all other transport states are unchanged.
+
+### Verification
+
+After the correction, the exact final sequence passed:
+
+- `./.venv/bin/python -m pytest` — `199 passed in 6.44s`.
+- `./.venv/bin/ruff format --check .` — `31 files already formatted`.
+- `./.venv/bin/ruff check .` — `All checks passed!`.
+- `./.venv/bin/mypy .` — `Success: no issues found in 15 source files`.
+- `git diff --check` — no output; exit 0.
+
+### Gotchas
+
+- This correction supersedes the earlier 6.87-second implementation
+  verification as the final code verification; both were separate successful
+  runs.
+
+### Status
+
+Final synthetic implementation verification is complete; stop for adversarial
+review without staging, commit, push, merge, or live work.
+
+## 2026-09-09 — R3 Phase 2 adversarial correction pass
+
+### Corrections
+
+- JSON decoding now catches ordinary `ValueError`, including Python’s bounded
+  integer-conversion limit, and maps it to the existing R2-compatible
+  `response_unverifiable` result without broad exception handling elsewhere.
+- Transport precedence is frozen and implemented: construction rejection,
+  pre-status failure, HTTP 400-or-greater failure, known-status incomplete
+  body, complete-body metadata unverifiability, unsupported below-400 status,
+  then eligible HTTP-200 XON normalization.
+- Exact boundary tests now use a non-BMP code point and assert 13,918-byte XON
+  and 25,910-byte normalized-R2 outputs, plus every requested adjacent bound.
+- R1 integration fixtures now use distinct deterministic baseline/current scan
+  and source-check IDs and assert visible guarding without disappearance or
+  exposure.
+
+### Gotchas
+
+- A status at or above 400 wins over simultaneous malformed headers,
+  over-limit body state, or post-status read failure.
+- The exact size evidence is serializer-specific and remains synthetic; it is
+  not evidence of live service response size or compatibility.
+
+### Status
+
+Correction implementation is complete pending the final full verification
+sequence and adversarial review.
+
+## 2026-09-09 — Verify R3 Phase 2 adversarial correction pass
+
+### Verification
+
+The complete corrected diff and status inspection preceded this final required
+sequence. Exact commands and outputs were:
+
+- `./.venv/bin/python -m pytest -q` — `207 passed in 6.09s`.
+- `./.venv/bin/ruff format --check .` — `31 files already formatted`.
+- `./.venv/bin/ruff check .` — `All checks passed!`.
+- `./.venv/bin/mypy .` — `Success: no issues found in 15 source files`.
+- `git diff --check` — no output; exit 0.
+- `git --no-pager diff --stat` — 4 tracked files changed; 287 insertions and
+  2 deletions. Untracked implementation/test files are listed by status.
+
+The test count is 147 pre-R3 tests plus 60 focused XON tests = 207 total.
+
+### Gotchas
+
+- The exact 6.09-second runtime is one final run; earlier successful timings
+  remain historical execution variance.
+- Verification remains synthetic and offline and does not establish live
+  compatibility, completeness, freshness, coverage, usefulness, or safety.
+
+### Status
+
+Correction pass is verified and stopped for adversarial review without
+staging, commit, push, merge, or live-source work.
+
+## 2026-09-09 — R3 Phase 2 final consistency corrections
+
+### Corrections
+
+- The research document now matches the implementation: an oversized
+  generated R2 envelope raises `R2EnvelopeTooLargeError` as a visible local
+  construction rejection before R2, unreachable through the bounded selected
+  XON path.
+- The first-check R1 integration test now includes an after-status incomplete
+  attempt and asserts no baseline, `NOT_COMPARABLE`,
+  `guarding_unverifiable`, `response_incomplete`, and no exposure events.
+- Corrected the recorded arithmetic to state: 147 pre-R3 tests plus 60
+  focused XON tests = 207 total.
+
+### Gotchas
+
+- The oversized-envelope rejection is a local guard, not an R2 or R1 source
+  outcome.
+
+### Status
+
+Final consistency corrections are complete pending verification and adversarial
+review.
+
+## 2026-09-09 — Verify R3 Phase 2 final consistency corrections
+
+### Verification
+
+The complete corrected diff and status inspection preceded this final sequence:
+
+- `./.venv/bin/python -m pytest -q` — `207 passed in 6.19s`.
+- `./.venv/bin/ruff format --check .` — `31 files already formatted`.
+- `./.venv/bin/ruff check .` — `All checks passed!`.
+- `./.venv/bin/mypy .` — `Success: no issues found in 15 source files`.
+- `git diff --check` — no output; exit 0.
+
+### Gotchas
+
+- The oversized generated-envelope guard raises visibly before R2 and is not
+  a source outcome.
+
+### Status
+
+Final consistency corrections are verified and stopped for adversarial review
+without staging, commit, push, merge, or live-source work.

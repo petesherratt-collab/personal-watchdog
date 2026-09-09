@@ -355,3 +355,249 @@ with 147 tests. No R1/R2 or valid scenario meaning changed.
 
 Stop for adversarial review. No staging, commit, push, or R3 work was
 performed.
+
+## 2026-09-08 — R3 Phase 1 XposedOrNot contract research (unverified local date)
+
+### Scope
+
+Read the repository-authoritative R2.5 checkpoint and research only official
+XposedOrNot documentation and official repositories. Create the R3 contract
+framing document; do not implement an adapter or make a live request.
+
+### Observed facts
+
+- The requested branch is at the supplied R2.5 merge commit, with the stated
+  147-test checkpoint and no material repository contradiction.
+- Official XposedOrNot documentation describes a keyless free email lookup,
+  analytics, password, catalogue, and key-authorized domain routes. Official
+  SDKs separately describe Plus behavior.
+- Official sources conflict or leave gaps around the free no-result HTTP
+  status, the optional detail query name, rate spacing, error bodies, exact
+  schema, content type/encoding, pagination, ordering, duplicates, response
+  limits, and completeness/freshness.
+- The conservative result keeps R1 as the owner of comparison and
+  disappearance, R2 as the owner of bytes-to-`SourceCheck` normalization, and
+  all ambiguous or failed paths outside completed-empty.
+
+### Decision boundary
+
+The synthetic adapter experiment is framed but not implemented or approved as
+live work. `DECISIONS.md` was not changed. No endpoint, identifier,
+credential, password, dependency, HTTP client, persistence, scheduler,
+notification, evidence archive, or R4 work was added.
+
+### Gotchas and assumptions
+
+- **Gotcha:** The official documentation’s free email no-result example has no
+  stated status, while the status table and Python SDK treat 404 as an error.
+  The framing preserves both facts instead of choosing one.
+- **Gotcha:** The official docs say `details`; the Python SDK sends
+  `include_details`. This blocks silently assuming one request contract.
+- **Assumption:** The documented analytics HTTP 200 all-null shape is a valid
+  genuine-empty synthetic fixture only when analytics is explicitly selected;
+  the free email no-result body is not treated as empty.
+
+### Verification after this entry
+
+Pending. Results will be appended below after the full repository checks and
+complete diff/status inspection.
+
+## 2026-09-08 — R3 Phase 1 verification (unverified local date)
+
+### Verification observation
+
+- Full pytest suite: 147 passed.
+- Ruff format check: 28 files already formatted.
+- Ruff lint: all checks passed.
+- mypy: success, no issues found in 12 source files.
+- `git diff --check`: passed.
+- Complete diff inspection found only the permitted R3 research document and
+  append-only history/log updates.
+
+The checks validate repository hygiene and existing synthetic behavior only;
+they do not call XposedOrNot or establish live-source truth.
+
+### Decision boundary
+
+Stop for adversarial review. Do not stage, commit, push, implement the adapter,
+or make a live request.
+
+## 2026-09-08 — R3 Phase 1 framing correction after Swagger/OpenAPI review
+
+### Scope
+
+Access only the official Swagger/OpenAPI documentation identified by the
+official API repository, plus pinned official GitHub source revisions. No
+functional lookup request or identifier was used.
+
+### Corrections
+
+- `/docs` is the official Swagger UI and `/openapi.json` reports OpenAPI
+  `3.0.0`, API specification version `2.0.0`, and the production server.
+- The specification resolves `include_details`, `application/json`, email
+  parameter formats, and selected 200/404 statuses, but leaves schemas open
+  and does not define no-match, encoding, size, pagination, duplicate,
+  ordering, freshness, or completeness rules.
+- The first synthetic experiment is now only free check-email with its own
+  source identity, scope, and schema version. Analytics is a deferred,
+  separate family and matrix.
+- The exact analytics sentinel is
+  `XON_ANALYTICS_HTTP_200_NO_MATCH_V1`, including non-null empty summary
+  objects.
+- The proposed transport envelope keeps HTTP metadata untrusted and keeps
+  trusted source context local, with explicit transport/XON/R2/R1 boundaries.
+- Exact duplicates use existing R2 deterministic deduplication; conflicting
+  duplicates remain unverifiable.
+- The permitted tracked record scope is four files:
+  `BUILD_HISTORY.md`, `PROGRESS_LOG.md`, `REFERENCES.md`, and
+  `RESEARCH_LOG.md`.
+
+### Decision boundary
+
+No adapter or HTTP client is implemented. No live request, credential,
+identifier, persistence, evidence archive, scheduler, notification, R4 work,
+staging, commit, push, or `DECISIONS.md` update is authorized by this
+correction.
+
+## 2026-09-08 — Verification of corrected R3 framing
+
+### Results
+
+- `.venv/bin/python -m pytest` — 147 passed in 6.01 seconds.
+- `.venv/bin/ruff format --check .` — `28 files already formatted`.
+- `.venv/bin/ruff check .` — `All checks passed!`.
+- `.venv/bin/mypy .` — `Success: no issues found in 12 source files`.
+- `git diff --check` — passed with no output.
+
+The formatting count is 28 because Ruff includes the new Markdown R3 document;
+the R2.5 commit and current worktree each contain 12 Python files. The prior
+27 count was the earlier included-file count, not a Python source change.
+
+### Boundary
+
+The four tracked record files are `BUILD_HISTORY.md`, `PROGRESS_LOG.md`,
+`REFERENCES.md`, and `RESEARCH_LOG.md`, alongside the R3 research document.
+No code, adapter, HTTP client, identifier, credential, live request, staging,
+commit, push, or external archive change was made.
+
+## 2026-09-08 — Final verification after coherent R3 rewrite
+
+### Verification
+
+Complete diff and status inspection occurred before the final verification
+sequence. The exact outputs were:
+
+- `.venv/bin/python -m pytest` — 147 passed in 6.01 seconds.
+- `.venv/bin/ruff format --check .` — `28 files already formatted`.
+- `.venv/bin/ruff check .` — `All checks passed!`.
+- `.venv/bin/mypy .` — `Success: no issues found in 12 source files`.
+- `git diff --check` — passed with no output.
+
+The prior 5.98-second pytest run and this final 6.01-second run are separate
+successful runs; only execution timing differs.
+
+### Boundary
+
+The rewritten research document has one coherent Sections 1–22 specification
+and no Section 23. No implementation or live request was made.
+
+## 2026-09-09 — Final R3 contract-gap correction
+
+### Corrections
+
+- The selected check-email matrix no longer claims a conflicting duplicate
+  fixture. Exact duplicate names use existing R2 deduplication; conflicting
+  duplicates are generic R2-only protection.
+- The analytics matrix is now sentinel-and-rejection research only. No
+  analytics positive-success schema is frozen, and future positive-success
+  framing is required before implementation.
+- Content-Type derivation is now exact: trim only ASCII space/tab at both ends,
+  reject non-ASCII and every parameter, compare the remaining media type ASCII
+  case-insensitively to `application/json`, and reject duplicate names before
+  derivation. The retained-header byte formula is explicit.
+- Normalized R2 serialization is frozen as compact UTF-8 JSON with deterministic
+  key order, `ensure_ascii=True` behavior, no non-standard numbers, final-byte
+  measurement, and refusal to call R2 above 65,536 bytes.
+- Transport states now distinguish before-status failure, after-status
+  incomplete read/timeout with preserved status, complete response, and
+  over-limit response. Contradictory local fixtures reject visibly.
+- Every selected check-email matrix row now specifies transport, XON, and R2
+  outcomes or construction rejection. R1 remains the sole owner of comparison,
+  exposure, guarding, and disappearance.
+
+### Boundary
+
+No adapter, HTTP client, live request, identifier, credential, dependency,
+R1/R2/R2.5 change, analytics implementation, staging, commit, push, or
+unrelated file modification was made.
+
+## 2026-09-09 — Verification of final R3 contract-gap correction
+
+### Results
+
+The complete requested diff inspection and status review preceded the final
+sequence:
+
+- `./.venv/bin/python -m pytest` — 147 passed in 6.08 seconds.
+- `./.venv/bin/ruff format --check .` — `28 files already formatted`.
+- `./.venv/bin/ruff check .` — `All checks passed!`.
+- `./.venv/bin/mypy .` — `Success: no issues found in 12 source files`.
+- `git diff --check` — passed with no output.
+
+### Boundary
+
+No implementation, functional request, identifier, credential, staging,
+commit, push, or unrelated file change was made.
+
+## 2026-09-09 — R3 Phase 2 synthetic experiment implementation
+
+R3 Phase 2 now contains only the frozen free check-email synthetic adapter,
+fixtures, and tests. The adapter keeps trusted source context outside
+response bytes, distinguishes pre-status and post-status failures, rejects
+ambiguous HTTP-200 bodies, preserves the selected no-completed-empty rule,
+delegates candidate validation/deduplication to R2, and leaves all comparison,
+exposure, guarding, and disappearance semantics to R1.
+
+The implementation remains offline and standard-library-only. Analytics and
+live integration remain deferred.
+
+## 2026-09-09 — R3 Phase 2 verification
+
+The final requested sequence passed: 199 tests, 31 Ruff-formatted files,
+clean Ruff lint, mypy with 15 checked source files, and clean Git whitespace.
+The 199-test total is 147 existing tests plus 52 new synthetic XON tests; the
+R2.5 implementation files were not changed. The experiment remains offline,
+synthetic, and stopped before live integration.
+
+## 2026-09-09 — Final transport invariant correction
+
+Pre-status transport failures now reject retained response headers as a visible
+construction error. The final rerun remained green: 199 tests passed, Ruff
+format/lint passed, mypy passed, and `git diff --check` passed. This is the
+final Phase 2 verification state.
+
+## 2026-09-09 — R3 Phase 2 adversarial correction pass
+
+Added the bounded hostile-integer regression, explicit simultaneous-fault
+precedence, exact non-BMP size evidence, all requested adjacent-bound tests,
+and chronologically distinct R1 integration IDs. The selected experiment
+remains synthetic, standard-library-only, and offline.
+
+## 2026-09-09 — Verify R3 Phase 2 adversarial correction pass
+
+Final verification passed: 207 tests, Ruff format and lint, mypy, and
+`git diff --check`. The branch remains uncommitted and no live-source work was
+started.
+
+## 2026-09-09 — R3 Phase 2 final consistency corrections
+
+Aligned the oversized-envelope documentation with the implemented visible
+construction rejection and added the missing incomplete first-check R1 guard
+coverage. Corrected the recorded test arithmetic to 147 pre-R3 plus 60 focused
+XON tests = 207 total.
+
+## 2026-09-09 — Verify R3 Phase 2 final consistency corrections
+
+Final consistency verification passed with 207 tests and clean formatting,
+lint, mypy, and whitespace checks. No commit, push, or live-source work was
+performed.
