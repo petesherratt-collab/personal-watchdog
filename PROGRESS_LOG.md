@@ -734,3 +734,18 @@ earlier focused-test set.
 The final verification passed: 243 tests, 34 files already formatted, clean
 Ruff lint, clean mypy across 17 source files, and clean `git diff --check`.
 The implementation remains uncommitted and ready for adversarial review.
+
+## 2026-09-10 — R3.5 Phase 2 adversarial test-strengthening correction
+
+Added independent fixture digest and raw-byte proofs, exact Scenario 17 output
+goldens, complete nested output-schema checks, strict-oracle assertions,
+delegation-call and immediate-prior object checks, and source-structure guards
+against runner semantic duplication. No runner semantics or scenario bytes
+changed.
+
+## 2026-09-10 — Verify R3.5 Phase 2 adversarial test strengthening
+
+All 17 scenarios passed in both modes (34 runs: 32 exit 0 and 2 exit 2), the
+full suite passed with 252 tests, Ruff format/lint and mypy passed, and
+`git diff --check` passed. The editable-install setuptools discovery issue
+remains an unchanged separate Gotcha.

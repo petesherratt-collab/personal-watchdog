@@ -1743,6 +1743,52 @@ unpushed for adversarial implementation review.
 
 Verification passed. No files were staged, committed, pushed, or merged.
 
+## 2026-09-10 — R3.5 Phase 2 adversarial test-strengthening correction
+
+### Correction
+
+- Added independently frozen raw SHA-256 digests and literal filename-to-ID
+  aliases for all 17 scenario files, including exact hostile and over-limit
+  body-byte assertions.
+- Added byte-exact Scenario 17 human and canonical JSON golden output checks,
+  complete nested machine-schema assertions, strict-oracle checks, delegation
+  argument checks, and structural protection against semantic reimplementation
+  in the runner.
+- The existing runner, scenario bytes, and R1/R2/R3 semantics were preserved.
+
+### Gotchas
+
+- The editable-install setuptools package-discovery issue remains separate
+  work and was not fixed.
+- The new raw digest and golden-output assertions are synthetic evidence only;
+  they do not establish live XposedOrNot compatibility.
+
+### Status
+
+This correction remains unstaged, uncommitted, and unpushed for adversarial
+review.
+
+## 2026-09-10 — Verify R3.5 Phase 2 adversarial test strengthening
+
+### Verification
+
+- All 17 curated scenarios passed in both modes: 34 runs, with 32 exit 0 and
+  2 Scenario 16 exit 2.
+- `./.venv/bin/python -m pytest -q` — 252 passed in 22.18s.
+- `./.venv/bin/ruff format --check .` — 34 files already formatted.
+- `./.venv/bin/ruff check .` — All checks passed!
+- `./.venv/bin/mypy .` — Success: no issues found in 17 source files.
+- `git diff --check` — passed with no output.
+
+### Gotchas
+
+- The editable-install setuptools package-discovery issue remains separate
+  work and was not fixed.
+
+### Status
+
+Verification passed. No files were staged, committed, pushed, or merged.
+
 ## 2026-09-09 — Final R3.5 Phase 2 verification correction
 
 ### Verification

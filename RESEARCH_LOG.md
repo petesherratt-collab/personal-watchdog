@@ -1263,3 +1263,20 @@ The final exact sequence passed with 243 tests in 13.45 seconds; Ruff format
 and lint passed, mypy passed across 17 source files, and `git diff --check`
 passed. The invalid R3.5 diagnostic path now reports the R3.5 runner version
 even when parsing fails before dispatch.
+
+## 2026-09-10 — R3.5 Phase 2 adversarial test-strengthening correction
+
+The Phase 2 review additions freeze independent raw digests and filename-to-ID
+aliases for all 17 literal scenarios, exact Scenario 17 human and JSON output,
+nested machine-schema shapes, strict oracle nullability, exact immediate-prior
+comparison arguments, and structural protection against duplicating XON or R2
+semantics in the runner. Existing implementation and scenario bytes were not
+changed.
+
+## 2026-09-10 — Verify R3.5 Phase 2 adversarial test strengthening
+
+All 34 curated scenario executions passed in their frozen modes, and the full
+suite passed with 252 tests. Ruff format and lint, mypy, and `git diff --check`
+also passed. These checks prove synthetic deterministic behavior and fixture
+integrity only; they do not prove live-service compatibility, completeness, or
+freshness.
