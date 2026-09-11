@@ -14,7 +14,7 @@ import unicodedata
 from collections.abc import Sequence
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, NoReturn, cast
+from typing import Any, Literal, NoReturn, cast
 
 from personal_watchdog.r1 import (
     AggregateOutcome,
@@ -30,9 +30,38 @@ from personal_watchdog.r1 import (
     compare_scans,
 )
 from personal_watchdog.r2_adapter import TrustedContext, normalize_response
+from personal_watchdog.xposedornot_check_email_adapter import (
+    MAX_XON_BODY_BYTES,
+    MAX_XON_HEADER_COUNT,
+    MAX_XON_HEADER_NAME_BYTES,
+    MAX_XON_HEADER_VALUE_BYTES,
+    MAX_XON_RETAINED_HEADER_BYTES,
+    XON_SOURCE,
+    BodyState,
+    FailurePhase,
+    Header,
+    TransportAttempt,
+    TransportConstructionError,
+    TransportDisposition,
+    classify_transport,
+    normalize_check_email,
+)
 
 SCENARIO_VERSION = "r2.5-visible-offline-simulator/1"
 RUNNER_VERSION = "r2.5-visible-offline-simulator/1"
+R35_SCENARIO_VERSION = "r3.5-visible-xon-scenarios/1"
+R35_RUNNER_VERSION = R35_SCENARIO_VERSION
+R35_ALLOWED_ADAPTERS = frozenset({"xposedornot-check-email", "synthetic-r2-adapter"})
+R35_SYNTHETIC_R2_SOURCE = SourceIdentity(
+    source_id="synthetic-source-b",
+    canonical_scope=("synthetic-scope-b-v1",),
+    adapter_id="synthetic-r2-adapter",
+    adapter_version="1.0",
+    schema_version=1,
+    normalization_version=1,
+    material_fields=frozenset({"display_state", "labels", "ordered"}),
+    set_like_fields=frozenset({"labels"}),
+)
 SCENARIO_ID_PATTERN = re.compile(r"^[a-z0-9][a-z0-9._-]{0,127}$", re.ASCII)
 
 MAX_SCENARIO_BYTES = 262_144
@@ -73,7 +102,19 @@ class ScenarioInvalid(Exception):
         self.code = code
         self.path = path
         self.message = message or _DIAGNOSTIC_MESSAGES[code]
+        self.runner_version: str | None = None
         super().__init__(self.message)
+
+
+class ScenarioInternalError(Exception):
+    """A frozen R3.5 runner invariant failure."""
+
+    def __init__(self, scenario_id: str, path: str) -> None:
+        self.scenario_id = scenario_id
+        self.path = path
+        super().__init__(
+            "XON adapter result contradicts its READY transport projection"
+        )
 
 
 class _DuplicateKey(Exception):
@@ -235,6 +276,44 @@ class ScenarioSpec:
     subject_ref: str
     sources: dict[str, SourceIdentity]
     scans: tuple[_ScanSpec, ...]
+
+
+@dataclass(frozen=True, slots=True)
+class _R35TransportSpec:
+    http_status: int | None
+    bounded_headers: tuple[Header, ...]
+    body_bytes: bytes
+    body_state: BodyState
+    transport_failure: Literal["transport"] | None
+    timed_out: bool
+    failure_phase: FailurePhase | None
+
+
+@dataclass(frozen=True, slots=True)
+class _R35CheckSpec:
+    source_ref: str
+    input_kind: str
+    raw: bytes | None
+    transport: _R35TransportSpec | None
+    expected_transport: dict[str, Any] | None
+    expected_xon: dict[str, Any] | None
+    expected_r2: dict[str, Any] | None
+
+
+@dataclass(frozen=True, slots=True)
+class _R35ScanSpec:
+    scan_order: int
+    source_order: tuple[str, ...]
+    checks: tuple[_R35CheckSpec, ...]
+    expected_r1: dict[str, Any]
+
+
+@dataclass(frozen=True, slots=True)
+class R35ScenarioSpec:
+    scenario_id: str
+    subject_ref: str
+    sources: dict[str, SourceIdentity]
+    scans: tuple[_R35ScanSpec, ...]
 
 
 def _decode_input(value: object, path: str) -> tuple[str, bytes | None]:
@@ -464,7 +543,7 @@ def _validate_expected_r1(value: object, path: str) -> dict[str, Any]:
     }
 
 
-def parse_scenario_bytes(raw: bytes) -> ScenarioSpec:
+def _parse_r25_scenario_bytes(raw: bytes) -> ScenarioSpec:
     """Parse and validate one bounded scenario file."""
 
     root = _parse_json(raw)
@@ -629,7 +708,358 @@ def parse_scenario_bytes(raw: bytes) -> ScenarioSpec:
     return ScenarioSpec(scenario_id, subject_ref, sources, tuple(scans))
 
 
-def load_scenario(path: str | Path) -> ScenarioSpec:
+def _decode_r35_hex(value: object, path: str, *, maximum: int) -> bytes:
+    encoded = _untrusted_text(value, path)
+    if len(encoded) % 2 or re.fullmatch(r"[0-9a-f]*", encoded) is None:
+        _fail("invalid_value", path)
+    raw = bytes.fromhex(encoded)
+    if len(raw) > maximum:
+        _fail("bounds_exceeded", path)
+    return raw
+
+
+def _validate_r35_transport(value: object, path: str) -> _R35TransportSpec:
+    obj = _expect_keys(
+        value,
+        {
+            "http_status",
+            "bounded_headers",
+            "body_bytes_hex",
+            "body_state",
+            "transport_failure",
+            "timed_out",
+            "failure_phase",
+        },
+        path,
+    )
+    status_value = obj["http_status"]
+    status = (
+        None
+        if status_value is None
+        else _exact_int(
+            status_value, _pointer(path, "http_status"), minimum=100, maximum=599
+        )
+    )
+    header_values = _expect_list(
+        obj["bounded_headers"], _pointer(path, "bounded_headers")
+    )
+    if len(header_values) > MAX_XON_HEADER_COUNT:
+        _fail("bounds_exceeded", _pointer(path, "bounded_headers"))
+    headers: list[Header] = []
+    total_header_bytes = 0
+    for index, value in enumerate(header_values):
+        header_path = _pointer(_pointer(path, "bounded_headers"), str(index))
+        header = _expect_keys(value, {"name_bytes_hex", "value_bytes_hex"}, header_path)
+        name = _decode_r35_hex(
+            header["name_bytes_hex"],
+            _pointer(header_path, "name_bytes_hex"),
+            maximum=MAX_XON_HEADER_NAME_BYTES,
+        )
+        header_value = _decode_r35_hex(
+            header["value_bytes_hex"],
+            _pointer(header_path, "value_bytes_hex"),
+            maximum=MAX_XON_HEADER_VALUE_BYTES,
+        )
+        total_header_bytes += len(name) + 1 + len(header_value) + 1
+        headers.append(Header(name, header_value))
+    if total_header_bytes > MAX_XON_RETAINED_HEADER_BYTES:
+        _fail("bounds_exceeded", _pointer(path, "bounded_headers"))
+
+    body = _decode_r35_hex(
+        obj["body_bytes_hex"],
+        _pointer(path, "body_bytes_hex"),
+        maximum=MAX_XON_BODY_BYTES,
+    )
+    body_state = _text(obj["body_state"], _pointer(path, "body_state"))
+    if body_state not in {"complete", "incomplete", "over_limit", "absent"}:
+        _fail("invalid_value", _pointer(path, "body_state"))
+    failure_value = obj["transport_failure"]
+    if failure_value is not None:
+        failure_value = _text(failure_value, _pointer(path, "transport_failure"))
+        if failure_value != "transport":
+            _fail("invalid_value", _pointer(path, "transport_failure"))
+    timed_out = obj["timed_out"]
+    if type(timed_out) is not bool:
+        _fail("invalid_type", _pointer(path, "timed_out"))
+    phase_value = obj["failure_phase"]
+    if phase_value is not None:
+        phase_value = _text(phase_value, _pointer(path, "failure_phase"))
+        if phase_value not in {"before_status", "after_status"}:
+            _fail("invalid_value", _pointer(path, "failure_phase"))
+    return _R35TransportSpec(
+        http_status=status,
+        bounded_headers=tuple(headers),
+        body_bytes=body,
+        body_state=cast(BodyState, body_state),
+        transport_failure=cast(Literal["transport"] | None, failure_value),
+        timed_out=timed_out,
+        failure_phase=cast(FailurePhase | None, phase_value),
+    )
+
+
+def _validate_r35_transport_oracle(value: object, path: str) -> dict[str, Any] | None:
+    if value is None:
+        return None
+    obj = _expect_keys(
+        value,
+        {"disposition", "reason", "normalized_content_type"},
+        path,
+    )
+    normalized = obj["normalized_content_type"]
+    return {
+        "disposition": _text(obj["disposition"], _pointer(path, "disposition")),
+        "reason": _text(obj["reason"], _pointer(path, "reason")),
+        "normalized_content_type": (
+            None
+            if normalized is None
+            else _text(normalized, _pointer(path, "normalized_content_type"))
+        ),
+    }
+
+
+def _validate_r35_xon_oracle(value: object, path: str) -> dict[str, Any] | None:
+    if value is None:
+        return None
+    obj = _expect_keys(value, {"classification"}, path)
+    return {
+        "classification": _text(obj["classification"], _pointer(path, "classification"))
+    }
+
+
+def _parse_r35_scenario_bytes(raw: bytes) -> R35ScenarioSpec:
+    root = _parse_json(raw)
+    obj = _expect_keys(
+        root,
+        {"scenario_version", "scenario_id", "subject_ref", "sources", "scans"},
+        "/",
+    )
+    if _text(obj["scenario_version"], "/scenario_version") != R35_SCENARIO_VERSION:
+        _fail("invalid_value", "/scenario_version")
+    scenario_id = _text(obj["scenario_id"], "/scenario_id")
+    if SCENARIO_ID_PATTERN.fullmatch(scenario_id) is None:
+        _fail("invalid_value", "/scenario_id")
+    subject_ref = _text(obj["subject_ref"], "/subject_ref")
+
+    source_values = _expect_list(obj["sources"], "/sources")
+    if not 1 <= len(source_values) <= MAX_SOURCES:
+        _fail("bounds_exceeded", "/sources")
+    sources: dict[str, SourceIdentity] = {}
+    source_refs: list[str] = []
+    for index, value in enumerate(source_values):
+        path = f"/sources/{index}"
+        source_obj = _expect_keys(
+            value,
+            {
+                "source_ref",
+                "source_id",
+                "canonical_scope",
+                "adapter_id",
+                "adapter_version",
+                "schema_version",
+                "normalization_version",
+                "material_fields",
+                "set_like_fields",
+            },
+            path,
+        )
+        source_ref = _text(source_obj["source_ref"], _pointer(path, "source_ref"))
+        if source_ref in sources:
+            _fail("invalid_value", _pointer(path, "source_ref"))
+        source_refs.append(source_ref)
+        canonical_scope = _string_list(
+            source_obj["canonical_scope"],
+            _pointer(path, "canonical_scope"),
+            maximum=MAX_CANONICAL_SCOPE_ITEMS,
+            require_sorted_unique=True,
+        )
+        if not canonical_scope:
+            _fail("invalid_value", _pointer(path, "canonical_scope"))
+        material_fields = _string_list(
+            source_obj["material_fields"],
+            _pointer(path, "material_fields"),
+            maximum=MAX_MATERIAL_FIELDS,
+            require_sorted_unique=True,
+        )
+        set_like_fields = _string_list(
+            source_obj["set_like_fields"],
+            _pointer(path, "set_like_fields"),
+            maximum=MAX_MATERIAL_FIELDS,
+            require_sorted_unique=True,
+        )
+        if not set(set_like_fields) <= set(material_fields):
+            _fail("invalid_value", _pointer(path, "set_like_fields"))
+        adapter_id = _text(source_obj["adapter_id"], _pointer(path, "adapter_id"))
+        if adapter_id not in R35_ALLOWED_ADAPTERS:
+            _fail("invalid_value", _pointer(path, "adapter_id"))
+        try:
+            identity = SourceIdentity(
+                source_id=_text(source_obj["source_id"], _pointer(path, "source_id")),
+                canonical_scope=tuple(canonical_scope),
+                adapter_id=adapter_id,
+                adapter_version=_text(
+                    source_obj["adapter_version"], _pointer(path, "adapter_version")
+                ),
+                schema_version=_exact_int(
+                    source_obj["schema_version"],
+                    _pointer(path, "schema_version"),
+                    minimum=1,
+                    maximum=64,
+                ),
+                normalization_version=_exact_int(
+                    source_obj["normalization_version"],
+                    _pointer(path, "normalization_version"),
+                    minimum=1,
+                    maximum=64,
+                ),
+                material_fields=frozenset(material_fields),
+                set_like_fields=frozenset(set_like_fields),
+            )
+        except ScenarioInvalid:
+            raise
+        except Exception:
+            _fail("construction_error", path)
+        if adapter_id == XON_SOURCE.adapter_id and identity != XON_SOURCE:
+            _fail("invalid_value", path)
+        if (
+            adapter_id == R35_SYNTHETIC_R2_SOURCE.adapter_id
+            and identity != R35_SYNTHETIC_R2_SOURCE
+        ):
+            _fail("invalid_value", path)
+        sources[source_ref] = identity
+    if source_refs != sorted(source_refs):
+        _fail("invalid_value", "/sources")
+
+    scan_values = _expect_list(obj["scans"], "/scans")
+    if not 1 <= len(scan_values) <= MAX_SCANS:
+        _fail("bounds_exceeded", "/scans")
+    scans: list[_R35ScanSpec] = []
+    for index, value in enumerate(scan_values):
+        path = f"/scans/{index}"
+        scan = _expect_keys(
+            value, {"scan_order", "source_order", "checks", "expected"}, path
+        )
+        scan_order = _exact_int(
+            scan["scan_order"],
+            _pointer(path, "scan_order"),
+            minimum=1,
+            maximum=MAX_SCANS,
+        )
+        source_order_values = _expect_list(
+            scan["source_order"], _pointer(path, "source_order")
+        )
+        if not 1 <= len(source_order_values) <= MAX_CHECKS_PER_SCAN:
+            _fail("bounds_exceeded", _pointer(path, "source_order"))
+        source_order = tuple(
+            _text(item, _pointer(_pointer(path, "source_order"), str(item_index)))
+            for item_index, item in enumerate(source_order_values)
+        )
+        if len(set(source_order)) != len(source_order):
+            _fail("reference_error", _pointer(path, "source_order"))
+        for source_ref in source_order:
+            if source_ref not in sources:
+                _fail("reference_error", _pointer(path, "source_order"))
+        resolved_ids = [sources[source_ref].source_id for source_ref in source_order]
+        if len(set(resolved_ids)) != len(resolved_ids):
+            _fail("reference_error", _pointer(path, "source_order"))
+        check_values = _expect_list(scan["checks"], _pointer(path, "checks"))
+        if len(check_values) != len(source_order):
+            _fail("invalid_value", _pointer(path, "checks"))
+        if not 1 <= len(check_values) <= MAX_CHECKS_PER_SCAN:
+            _fail("bounds_exceeded", _pointer(path, "checks"))
+        checks: list[_R35CheckSpec] = []
+        for check_index, check_value in enumerate(check_values):
+            check_path = f"{path}/checks/{check_index}"
+            check = _expect_keys(
+                check_value, {"source_ref", "input", "expected"}, check_path
+            )
+            source_ref = _text(check["source_ref"], _pointer(check_path, "source_ref"))
+            if source_ref != source_order[check_index]:
+                _fail("reference_error", _pointer(check_path, "source_ref"))
+            source_identity = sources[source_ref]
+            input_path = _pointer(check_path, "input")
+            input_obj = _expect_object(check["input"], input_path)
+            input_keys = set(input_obj)
+            transport: _R35TransportSpec | None = None
+            r2_raw: bytes | None = None
+            if source_identity.adapter_id == XON_SOURCE.adapter_id:
+                if input_keys != {"transport_attempt"}:
+                    _fail("invalid_value", input_path)
+                transport = _validate_r35_transport(
+                    input_obj["transport_attempt"],
+                    _pointer(input_path, "transport_attempt"),
+                )
+                input_kind = "transport_attempt"
+            else:
+                if input_keys != {"r2_bytes_hex"}:
+                    _fail("invalid_value", input_path)
+                r2_raw = _decode_r35_hex(
+                    input_obj["r2_bytes_hex"],
+                    _pointer(input_path, "r2_bytes_hex"),
+                    maximum=MAX_RESPONSE_BYTES,
+                )
+                input_kind = "r2_bytes_hex"
+            expected_path = _pointer(check_path, "expected")
+            expected = _expect_keys(
+                check["expected"],
+                {"r3_transport", "xon", "r2"},
+                expected_path,
+            )
+            expected_transport = _validate_r35_transport_oracle(
+                expected["r3_transport"],
+                _pointer(expected_path, "r3_transport"),
+            )
+            expected_xon = _validate_r35_xon_oracle(
+                expected["xon"], _pointer(expected_path, "xon")
+            )
+            expected_r2 = _validate_expected_r2(
+                expected["r2"], _pointer(expected_path, "r2")
+            )
+            if input_kind == "r2_bytes_hex" and (
+                expected_transport is not None or expected_xon is not None
+            ):
+                _fail("invalid_value", expected_path)
+            checks.append(
+                _R35CheckSpec(
+                    source_ref=source_ref,
+                    input_kind=input_kind,
+                    raw=r2_raw,
+                    transport=transport,
+                    expected_transport=expected_transport,
+                    expected_xon=expected_xon,
+                    expected_r2=expected_r2,
+                )
+            )
+        expected_path = _pointer(path, "expected")
+        expected = _expect_keys(scan["expected"], {"r1"}, expected_path)
+        expected_r1 = _validate_expected_r1(
+            expected["r1"], _pointer(expected_path, "r1")
+        )
+        scans.append(_R35ScanSpec(scan_order, source_order, tuple(checks), expected_r1))
+    if [scan.scan_order for scan in scans] != list(range(1, len(scans) + 1)):
+        _fail("invalid_value", "/scans")
+    return R35ScenarioSpec(scenario_id, subject_ref, sources, tuple(scans))
+
+
+def parse_scenario_bytes(raw: bytes) -> ScenarioSpec | R35ScenarioSpec:
+    """Parse either the frozen R2.5 or R3.5 scenario family."""
+
+    try:
+        root = _parse_json(raw)
+    except ScenarioInvalid as error:
+        if R35_SCENARIO_VERSION.encode("ascii") in raw:
+            error.runner_version = R35_RUNNER_VERSION
+        raise
+    version = root.get("scenario_version")
+    if version == R35_SCENARIO_VERSION:
+        try:
+            return _parse_r35_scenario_bytes(raw)
+        except ScenarioInvalid as error:
+            error.runner_version = R35_RUNNER_VERSION
+            raise
+    return _parse_r25_scenario_bytes(raw)
+
+
+def load_scenario(path: str | Path) -> ScenarioSpec | R35ScenarioSpec:
     """Read and validate a scenario without exposing filesystem exceptions."""
 
     try:
@@ -735,9 +1165,11 @@ class ScenarioRun:
     subject_ref: str
 
 
-def run_scenario(scenario: ScenarioSpec) -> ScenarioRun:
+def run_scenario(scenario: ScenarioSpec | R35ScenarioSpec) -> ScenarioRun:
     """Execute a validated scenario using R2 and R1 as the only semantics."""
 
+    if not isinstance(scenario, ScenarioSpec):
+        raise TypeError("R3.5 scenarios use run_r35_scenario")
     scan_records: list[dict[str, Any]] = []
     all_mismatches: list[dict[str, Any]] = []
     baseline: ScanAttempt | None = None
@@ -838,6 +1270,202 @@ def run_scenario(scenario: ScenarioSpec) -> ScenarioRun:
     result = "PASS" if not all_mismatches else "EXPECTATION_MISMATCH"
     output = {
         "runner_version": RUNNER_VERSION,
+        "scenario_id": scenario.scenario_id,
+        "result": result.lower(),
+        "scans": scan_records,
+        "mismatches": all_mismatches,
+        "diagnostic": None,
+    }
+    return ScenarioRun(output, tuple(scan_records), scenario.subject_ref)
+
+
+def _r35_check_projection(check: SourceCheck) -> dict[str, Any]:
+    return _check_projection(check)
+
+
+def _r35_transport_projection(
+    attempt: TransportAttempt, classification: Any
+) -> dict[str, Any]:
+    return {
+        "http_status": attempt.http_status,
+        "header_count": len(attempt.bounded_headers),
+        "body_bytes": len(attempt.body_bytes),
+        "body_state": attempt.body_state,
+        "transport_failure": attempt.transport_failure,
+        "timed_out": attempt.timed_out,
+        "failure_phase": attempt.failure_phase,
+        "normalized_content_type": classification.normalized_content_type,
+        "disposition": classification.disposition.value,
+        "reason": classification.reason,
+    }
+
+
+def _r35_xon_classification(
+    scenario: R35ScenarioSpec,
+    *,
+    path: str,
+    classification: Any,
+    check: SourceCheck,
+) -> dict[str, str]:
+    if classification.disposition is not TransportDisposition.READY:
+        return {"classification": "not_entered"}
+    if check.status is SourceStatus.COMPLETED:
+        return {"classification": "success_predicate_accepted"}
+    if check.status is SourceStatus.UNVERIFIABLE:
+        return {"classification": "success_predicate_rejected"}
+    raise ScenarioInternalError(scenario.scenario_id, path)
+
+
+def _r35_expected_projection(
+    expected: dict[str, Any] | None, actual: dict[str, Any] | None
+) -> dict[str, Any] | None:
+    if expected is None or actual is None:
+        return actual
+    return {key: actual[key] for key in expected}
+
+
+def run_r35_scenario(scenario: R35ScenarioSpec) -> ScenarioRun:
+    """Execute one frozen R3.5 scenario through the committed boundaries."""
+
+    scan_records: list[dict[str, Any]] = []
+    all_mismatches: list[dict[str, Any]] = []
+    baseline: ScanAttempt | None = None
+    for scan_index, scan in enumerate(scenario.scans):
+        scan_id = f"{scenario.scenario_id}:scan-{scan.scan_order:03d}"
+        source_checks: list[SourceCheck] = []
+        source_records: list[dict[str, Any]] = []
+        for check_index, check_spec in enumerate(scan.checks):
+            source = scenario.sources[check_spec.source_ref]
+            source_check_id = f"{scan_id}:check-{check_spec.source_ref}"
+            diagnostics = DiagnosticMetadata("synthetic-time")
+            check_path = f"/scans/{scan_index}/checks/{check_index}"
+            input_path = f"{check_path}/input"
+            if check_spec.input_kind == "transport_attempt":
+                assert check_spec.transport is not None
+                context = TrustedContext(
+                    scan_id=scan_id,
+                    source_check_id=source_check_id,
+                    subject_ref=scenario.subject_ref,
+                    source=source,
+                    diagnostics=diagnostics,
+                )
+                transport = check_spec.transport
+                try:
+                    attempt = TransportAttempt(
+                        http_status=transport.http_status,
+                        bounded_headers=transport.bounded_headers,
+                        body_bytes=transport.body_bytes,
+                        body_state=transport.body_state,
+                        transport_failure=transport.transport_failure,
+                        timed_out=transport.timed_out,
+                        failure_phase=transport.failure_phase,
+                        trusted_context=context,
+                    )
+                except TransportConstructionError as error:
+                    raise ScenarioInvalid(
+                        "construction_error",
+                        f"{input_path}/transport_attempt",
+                    ) from error
+                classification = classify_transport(attempt)
+                check = normalize_check_email(attempt)
+                xon = _r35_xon_classification(
+                    scenario,
+                    path=check_path,
+                    classification=classification,
+                    check=check,
+                )
+                transport_projection = _r35_transport_projection(
+                    attempt, classification
+                )
+                input_bytes = len(attempt.body_bytes)
+                input_kind = "transport_attempt"
+                r2_invoked = True
+            else:
+                raw = cast(bytes, check_spec.raw)
+                context = TrustedContext(
+                    scan_id=scan_id,
+                    source_check_id=source_check_id,
+                    subject_ref=scenario.subject_ref,
+                    source=source,
+                    diagnostics=diagnostics,
+                )
+                check = normalize_response(raw, context)
+                xon = None
+                transport_projection = None
+                input_bytes = len(raw)
+                input_kind = "r2_bytes_hex"
+                r2_invoked = True
+            r2_projection = _r35_check_projection(check)
+            source_checks.append(check)
+            source_records.append(
+                {
+                    "source_ref": check_spec.source_ref,
+                    "source_id": source.source_id,
+                    "adapter_id": source.adapter_id,
+                    "source_check_id": source_check_id,
+                    "input_kind": input_kind,
+                    "input_bytes": input_bytes,
+                    "transport": transport_projection,
+                    "xon": xon,
+                    "r2_invoked": r2_invoked,
+                    "r2": r2_projection,
+                    "r1": _r35_check_projection(check),
+                }
+            )
+            _compare_value(
+                check_spec.expected_transport,
+                _r35_expected_projection(
+                    check_spec.expected_transport, transport_projection
+                ),
+                f"{check_path}/expected/r3_transport",
+                all_mismatches,
+            )
+            _compare_value(
+                check_spec.expected_xon,
+                xon,
+                f"{check_path}/expected/xon",
+                all_mismatches,
+            )
+            _compare_value(
+                check_spec.expected_r2,
+                r2_projection,
+                f"{check_path}/expected/r2",
+                all_mismatches,
+            )
+
+        plan = ScanPlan.create(
+            subject_ref=scenario.subject_ref,
+            sources=tuple(scenario.sources[ref] for ref in scan.source_order),
+            execution_order=tuple(
+                scenario.sources[ref].source_id for ref in scan.source_order
+            ),
+        )
+        current = ScanAttempt.create(
+            scan_id=scan_id, plan=plan, source_checks=tuple(source_checks)
+        )
+        report = compare_scans(baseline, current)
+        r1_projection = _report_projection(report)
+        actual_scan = {
+            "scan_id": scan_id,
+            "scan_order": scan.scan_order,
+            "source_order": list(scan.source_order),
+            "outcome": current.outcome.value,
+            "source_checks": source_records,
+            "r1": r1_projection,
+            "exposure_silence": not bool(report.exposure_events),
+        }
+        scan_records.append(actual_scan)
+        _compare_value(
+            scan.expected_r1,
+            r1_projection,
+            f"/scans/{scan_index}/expected/r1",
+            all_mismatches,
+        )
+        baseline = current
+
+    result = "PASS" if not all_mismatches else "EXPECTATION_MISMATCH"
+    output = {
+        "runner_version": R35_RUNNER_VERSION,
         "scenario_id": scenario.scenario_id,
         "result": result.lower(),
         "scans": scan_records,
@@ -961,13 +1589,171 @@ def render_human(run: ScenarioRun) -> str:
     return "\n".join(lines) + "\n"
 
 
-def _invalid_output(error: ScenarioInvalid, json_mode: bool) -> int:
+def render_r35_human(run: ScenarioRun) -> str:
+    output = run.output
+    lines = [
+        "SCENARIO "
+        f"{_human_line_string(output['scenario_id'])} "
+        f"result={output['result'].upper()}",
+        f"SUBJECT {_human_line_string(run.subject_ref)}",
+    ]
+    total_checks = 0
+    total_comparisons = 0
+    total_exposures = 0
+    total_guards = 0
+    for scan in run.human_scans:
+        checks = scan["source_checks"]
+        report = scan["r1"]
+        total_checks += len(checks)
+        total_comparisons += len(report["comparisons"])
+        total_exposures += len(report["exposure_events"])
+        total_guards += len(report["guarding_events"])
+        scan_mismatch = any(
+            item["path"].startswith(f"/scans/{scan['scan_order'] - 1}/")
+            for item in output["mismatches"]
+        )
+        lines.append(
+            f"SCAN order={scan['scan_order']} total={len(run.human_scans)} "
+            f"scan_id={_human_line_string(scan['scan_id'])} "
+            f"outcome={_human_line_string(scan['outcome'])} "
+            f"expectation={'MISMATCH' if scan_mismatch else 'PASS'}"
+        )
+        for check in checks:
+            transport = check["transport"]
+            xon = check["xon"]
+            if transport is None:
+                transport_values = {
+                    "http_status": None,
+                    "header_count": 0,
+                    "body_bytes": check["input_bytes"],
+                    "body_state": "not_applicable",
+                    "transport_failure": None,
+                    "timed_out": False,
+                    "failure_phase": None,
+                    "normalized_content_type": None,
+                    "disposition": "not_applicable",
+                    "reason": "not_applicable",
+                }
+                xon_classification = "not_applicable"
+            else:
+                transport_values = transport
+                assert xon is not None
+                xon_classification = xon["classification"]
+            lines.append(
+                "TRANSPORT "
+                f"source_ref={_human_line_string(check['source_ref'])} "
+                f"source_id={_human_line_string(check['source_id'])} "
+                f"source_check_id={_human_line_string(check['source_check_id'])} "
+                f"http_status={_human_line_string(transport_values['http_status'])} "
+                f"header_count={transport_values['header_count']} "
+                f"body_bytes={transport_values['body_bytes']} "
+                f"body_state={_human_line_string(transport_values['body_state'])} "
+                "transport_failure="
+                f"{_human_line_string(transport_values['transport_failure'])} "
+                f"timed_out={'TRUE' if transport_values['timed_out'] else 'FALSE'} "
+                "failure_phase="
+                f"{_human_line_string(transport_values['failure_phase'])} "
+                "normalized_content_type="
+                f"{_human_line_string(transport_values['normalized_content_type'])} "
+                f"disposition={_human_line_string(transport_values['disposition'])} "
+                f"reason={_human_line_string(transport_values['reason'])}"
+            )
+            lines.append(
+                "XON "
+                f"source_ref={_human_line_string(check['source_ref'])} "
+                f"source_id={_human_line_string(check['source_id'])} "
+                f"source_check_id={_human_line_string(check['source_check_id'])} "
+                f"classification={_human_line_string(xon_classification)}"
+            )
+            r2 = check["r2"]
+            r1 = check["r1"]
+            lines.append(
+                f"SOURCE_CHECK source_ref={_human_line_string(check['source_ref'])} "
+                f"source_id={_human_line_string(check['source_id'])} "
+                f"source_check_id={_human_line_string(check['source_check_id'])} "
+                f"input_kind={_human_line_string(check['input_kind'])} "
+                f"input_bytes={check['input_bytes']} "
+                f"r2_invoked={'TRUE' if check['r2_invoked'] else 'FALSE'} "
+                f"r2_status={_human_line_string(r2['status'] if r2 else None)} "
+                "r2_reason_codes="
+                f"{_human_line_string(r2['reason_codes'] if r2 else [])} "
+                "r2_finding_keys="
+                f"{_human_line_string(r2['finding_keys'] if r2 else [])} "
+                f"status={_human_line_string(r1['status'])} "
+                f"reason_codes={_human_line_string(r1['reason_codes'])} "
+                f"finding_keys={_human_line_string(r1['finding_keys'])}"
+            )
+        for source_id in report["baseline_created_sources"]:
+            lines.append(f"BASELINE_CREATED source_id={_human_line_string(source_id)}")
+        for comparison in report["comparisons"]:
+            lines.append(
+                "COMPARISON "
+                f"comparison_id={_human_line_string(comparison['comparison_id'])} "
+                f"subject_ref={_human_line_string(comparison['subject_ref'])} "
+                f"source_id={_human_line_string(comparison['source_id'])} "
+                "baseline_scan_id="
+                f"{_human_line_string(comparison['baseline_scan_id'])} "
+                f"current_scan_id={_human_line_string(comparison['current_scan_id'])} "
+                f"finding_key={_human_line_string(comparison['finding_key'])} "
+                f"kind={_human_line_string(comparison['kind'])} "
+                "changed_field_paths="
+                f"{_canonical_json(comparison['changed_field_paths'])} "
+                f"reason_codes={_canonical_json(comparison['reason_codes'])}"
+            )
+        for exposure in report["exposure_events"]:
+            lines.append(
+                "EXPOSURE_EVENT "
+                f"comparison_id={_human_line_string(exposure['comparison_id'])} "
+                f"subject_ref={_human_line_string(exposure['subject_ref'])} "
+                f"source_id={_human_line_string(exposure['source_id'])} "
+                f"finding_key={_human_line_string(exposure['finding_key'])} "
+                f"kind={_human_line_string(exposure['kind'])} "
+                "changed_field_paths="
+                f"{_canonical_json(exposure['changed_field_paths'])}"
+            )
+        for guard in report["guarding_events"]:
+            lines.append(
+                "GUARDING_EVENT "
+                f"guard_id={_human_line_string(guard['guard_id'])} "
+                f"subject_ref={_human_line_string(guard['subject_ref'])} "
+                f"source_id={_human_line_string(guard['source_id'])} "
+                f"baseline_scan_id={_human_line_string(guard['baseline_scan_id'])} "
+                f"current_scan_id={_human_line_string(guard['current_scan_id'])} "
+                f"guard_kind={_human_line_string(guard['guard_kind'])} "
+                f"prior_status={_human_line_string(guard['prior_status'])} "
+                f"current_status={_human_line_string(guard['current_status'])} "
+                f"reason_codes={_canonical_json(guard['reason_codes'])}"
+            )
+        lines.append(
+            f"EXPOSURE_SILENCE actual={'TRUE' if scan['exposure_silence'] else 'FALSE'}"
+        )
+        for mismatch in output["mismatches"]:
+            if mismatch["path"].startswith(f"/scans/{scan['scan_order'] - 1}/"):
+                lines.append(
+                    f"MISMATCH path={_human_line_string(mismatch['path'])} "
+                    f"expected={_canonical_json(mismatch['expected'])} "
+                    f"actual={_canonical_json(mismatch['actual'])}"
+                )
+    lines.append(
+        f"SUMMARY scans={len(run.human_scans)} source_checks={total_checks} "
+        f"comparisons={total_comparisons} exposure_events={total_exposures} "
+        f"guarding_events={total_guards} mismatches={len(output['mismatches'])}"
+    )
+    return "\n".join(lines) + "\n"
+
+
+def _invalid_output(
+    error: ScenarioInvalid,
+    json_mode: bool,
+    *,
+    runner_version: str = RUNNER_VERSION,
+) -> int:
     diagnostic = {"code": error.code, "path": error.path, "message": error.message}
     if json_mode:
         print(
             _canonical_json(
                 {
-                    "runner_version": RUNNER_VERSION,
+                    "runner_version": runner_version,
                     "scenario_id": None,
                     "result": "invalid_scenario",
                     "scans": [],
@@ -985,6 +1771,35 @@ def _invalid_output(error: ScenarioInvalid, json_mode: bool) -> int:
     return 2
 
 
+def _internal_output(error: ScenarioInternalError, json_mode: bool) -> int:
+    message = str(error)
+    if json_mode:
+        print(
+            _canonical_json(
+                {
+                    "runner_version": R35_RUNNER_VERSION,
+                    "scenario_id": error.scenario_id,
+                    "result": "internal_error",
+                    "scans": [],
+                    "mismatches": [],
+                    "diagnostic": {
+                        "code": "xon_projection_invariant",
+                        "path": error.path,
+                        "message": message,
+                    },
+                }
+            )
+        )
+    else:
+        print(
+            "INTERNAL_ERROR code=xon_projection_invariant "
+            f"path={_human_line_string(error.path)} "
+            f"message={_human_line_string(message)}",
+            file=sys.stderr,
+        )
+    return 2
+
+
 def main(argv: Sequence[str] | None = None) -> int:
     args = list(sys.argv[1:] if argv is None else argv)
     json_mode = False
@@ -993,17 +1808,34 @@ def main(argv: Sequence[str] | None = None) -> int:
         args.pop(0)
     if len(args) != 1:
         return _invalid_output(ScenarioInvalid("invalid_value", "/"), json_mode)
+    runner_version = RUNNER_VERSION
     try:
         scenario = load_scenario(args[0])
-        run = run_scenario(scenario)
+        if isinstance(scenario, R35ScenarioSpec):
+            runner_version = R35_RUNNER_VERSION
+            run = run_r35_scenario(scenario)
+            render = render_r35_human
+        else:
+            run = run_scenario(scenario)
+            render = render_human
+    except ScenarioInternalError as error:
+        return _internal_output(error, json_mode)
     except ScenarioInvalid as error:
-        return _invalid_output(error, json_mode)
+        return _invalid_output(
+            error,
+            json_mode,
+            runner_version=error.runner_version or runner_version,
+        )
     except Exception:
-        return _invalid_output(ScenarioInvalid("construction_error", "/"), json_mode)
+        return _invalid_output(
+            ScenarioInvalid("construction_error", "/"),
+            json_mode,
+            runner_version=runner_version,
+        )
     if json_mode:
         print(_canonical_json(run.output))
     else:
-        print(render_human(run), end="")
+        print(render(run), end="")
     return 0 if run.output["result"] == "pass" else 1
 
 
