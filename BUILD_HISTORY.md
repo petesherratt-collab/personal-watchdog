@@ -2103,3 +2103,163 @@ commit.
 - The final review did not make a network request or alter the two-request
   experiment count.
 - No files were staged; no commit or push was performed.
+
+## 2026-09-15 — R5 Phase 1 offline XON contract reconciliation framing
+
+### Objective
+
+Frame a local-only R5 experiment using the already observed R4 response shape,
+without implementing a fixture or making another live request.
+
+### Changes
+
+- Added `RESEARCH_005_OFFLINE_XON_CONTRACT_RECONCILIATION.md`.
+- Defined a narrow question about reproducing the existing R3/R2
+  `unverifiable` result from one bounded, provenance-limited offline input.
+- Preserved the prohibition on completed-empty inference, clean claims,
+  schema loosening, live requests, persistence, comparison, notification, and
+  monitoring.
+
+### Verification
+
+- Confirmed the worktree was clean at R4 commit `6e6fc3d` before framing.
+- Confirmed no implementation file, fixture, or test was added.
+- Confirmed no network request was made.
+
+### Result
+
+R5 remains framed only. Any Phase 2 fixture or test requires explicit approval
+of the exact offline scope.
+
+### Gotchas
+
+- The observed body is evidence from one R4 request, not a general XON
+  no-match contract.
+- Adding a fixture later must not turn `unverifiable` into completed-empty,
+  disappearance, or a clean claim.
+- This framing is local and remains uncommitted and unpushed.
+
+## 2026-09-15 — R5 Phase 2 offline execution
+
+### Objective
+
+Execute the explicitly approved offline R5 scope: add one bounded,
+provenance-limited fixture for the R4 body and verify it through the existing
+R3/R2 adapter without making a live request.
+
+### Changes
+
+- Added `scenarios/r5_xon/01_observed_http_200_not_found.json` with HTTP 200,
+  complete `application/json` transport metadata, the exact bounded body as
+  hex, and redacted local references.
+- Added `tests/test_r5_offline_xon_contract_reconciliation.py` with coverage
+  for adapter reproduction and fixture redaction/bounds.
+- Updated the R5 document and append-only records with the execution result.
+
+### Verification
+
+- Focused R5 tests: 2 passed.
+- Full suite: 263 passed.
+- Ruff format: passed.
+- Ruff lint: passed.
+- mypy: passed using the configured `tests` target; 14 source files checked.
+- `git diff --check`: passed.
+
+### Result
+
+The existing adapter reproduced `ready` transport and
+`unverifiable`/`response_unverifiable` source output with no accepted
+findings. R5 did not alter R3/R2 semantics or invoke R1 comparison.
+
+### Gotchas
+
+- The fixture proves only local reproducibility of one observed body shape; it
+  does not establish a general no-match contract or service completeness.
+- The fixture’s provenance metadata is test data and must not become trusted
+  adapter context.
+- No live request, dependency, persistence, notification, collector, commit,
+  or push was made during Phase 2.
+
+## 2026-09-15 — R6 Phase 1 minimal local watchdog workflow framing
+
+### Objective
+
+Define the smallest truthful user workflow for Personal Watchdog without
+implementing a CLI or local persistence.
+
+### Changes
+
+- Added `RESEARCH_006_LOCAL_WATCHDOG_WORKFLOW.md`.
+- Framed proposed meanings for `init`, `scan`, comparison, `report`, and
+  `history`.
+- Defined a one-synthetic-subject, one-offline-fixture Phase 2 target,
+  bounded local records, and stop criteria for live or broader product scope.
+
+### Verification
+
+- Confirmed the R5-local worktree state before framing.
+- Confirmed no production code, fixture, test, dependency, or network request
+  was added by R6.
+- `git diff --check`: passed.
+
+### Result
+
+R6 remains framed only. The proposed workflow preserves existing R1/R2
+semantics: only completed comparable checks support absence or change claims;
+failed and unverifiable results remain visible and non-comparable.
+
+### Gotchas
+
+- The planned `watchdog` commands in the README remain unimplemented.
+- Storage format, retention, correction, recovery, and configuration secrecy
+  require decisions before Phase 2 implementation.
+- No scheduling, notification, live source, or comprehensive coverage is
+  implied by this framing.
+
+## 2026-09-15 — R6 Phase 2 offline workflow execution
+
+### Objective
+
+Implement the explicitly approved minimal local workflow over one synthetic
+subject and one offline fixture source, preserving existing R1/R2 semantics.
+
+### Changes
+
+- Added `personal_watchdog/cli.py` with `init`, fixture `scan`,
+  `report --latest`, and `history` commands.
+- Added bounded JSON configuration and history state under a caller-selected
+  directory, defaulting to `.watchdog/`.
+- Added six fixture outcomes: `baseline`, `unchanged`, `changed`,
+  `disappeared`, `failed`, and `unverifiable`.
+- Added `tests/test_r6_local_workflow.py` covering baseline, change,
+  disappearance, guarding, reloadable reports/history, and uninitialized
+  state.
+- Updated `README.md` and the R6 document with the current offline usage.
+- Added `.watchdog/` to `.gitignore` so default local state is not staged.
+
+### Verification
+
+- Focused R6 tests: 5 passed.
+- Full suite: 268 passed.
+- Ruff format: passed.
+- Ruff lint: passed.
+- mypy: passed using the configured `tests` target; 16 source files checked.
+- `git diff --check`: passed.
+- Manually exercised init, baseline scan, changed scan, failed scan, report,
+  and history in a temporary local state directory.
+
+### Result
+
+The workflow produces a baseline, material-change exposure, disappearance
+only after a comparable completed baseline, and guarding events for failed or
+unverifiable current checks. State contains structured records only and is
+bounded to 32 scans.
+
+### Gotchas
+
+- This is an offline fixture workflow, not a live watchdog or installed CLI
+  executable.
+- The local JSON state is bounded and atomically replaced, but encryption,
+  retention deletion, correction, corruption recovery, and export remain open.
+- No real identifier, credential, scheduler, notification, live adapter,
+  dependency, commit, or push was added.

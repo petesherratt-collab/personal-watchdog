@@ -1,0 +1,28 @@
+{
+  "fixture_version": "r5-offline-xon-contract-reconciliation/1",
+  "fixture_id": "r5-01-observed-http-200-not-found",
+  "provenance": {
+    "experiment": "R4",
+    "stage": "3",
+    "observed_on": "2026-09-13"
+  },
+  "trusted_context": {
+    "scan_id": "r5-scan-001",
+    "source_check_id": "r5-check-001",
+    "subject_ref": "r5-subject-01"
+  },
+  "transport_attempt": {
+    "http_status": 200,
+    "bounded_headers": [
+      {
+        "name_bytes_hex": "436f6e74656e742d54797065",
+        "value_bytes_hex": "6170706c69636174696f6e2f6a736f6e"
+      }
+    ],
+    "body_bytes_hex": "7b224572726f72223a224e6f7420666f756e64222c22656d61696c223a6e756c6c7d",
+    "body_state": "complete",
+    "transport_failure": null,
+    "timed_out": false,
+    "failure_phase": null
+  }
+}

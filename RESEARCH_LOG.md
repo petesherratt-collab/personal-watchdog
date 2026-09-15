@@ -1435,3 +1435,120 @@ frozen R3 contract correctly remains `unverifiable`.
 R4 is complete as a bounded experiment and does not authorize a live adapter,
 completed-empty mapping, clean claim, monitoring, or another request. The
 branch is ready for a separately authorized commit.
+
+## 2026-09-15 — R5 Phase 1 offline XON contract reconciliation framing
+
+### Question
+
+Can the one observed R4 HTTP-200 body `{"Error":"Not found","email":null}`
+be represented as a bounded offline fixture and passed through the existing
+R3/R2 boundary while remaining `unverifiable`?
+
+### Boundary
+
+This is documentation-only framing. No fixture, implementation, live request,
+dependency, commit, push, pull-request update, or merge was made. R5 does not
+generalize the observed body into a service contract, add completed-empty
+semantics, or authorize comparison, persistence, notification, or monitoring.
+
+### Proposed scope
+
+If separately approved, Phase 2 may add one provenance-limited offline fixture
+and tests that call the existing adapter. The expected result is transport
+`ready`, source status `unverifiable`, reason `response_unverifiable`, and no
+accepted findings. The fixture must not contain a complete identifier or full
+request URL, and existing R1/R2/R2.5/R3/R3.5 semantics must remain unchanged.
+
+### Status
+
+R5 Phase 1 framing is complete locally. Stop for review and explicit Phase 2
+approval.
+
+## 2026-09-15 — R5 Phase 2 offline execution
+
+### Approval and scope
+
+Peter approved the exact offline Phase 2 scope: one provenance-limited fixture
+derived from the R4 diagnostic observation and tests calling the existing
+public R3/R2 adapter boundary. No live request was authorized or made.
+
+### Result
+
+The fixture reproduced `transport=ready`, source status `unverifiable`, reason
+`response_unverifiable`, and no accepted findings. The test called
+`classify_transport` and `normalize_check_email` directly; it did not call R1,
+invent a completed-empty path, or compare the result.
+
+### Verification
+
+Focused R5 tests: 2 passed. Full repository suite: 263 passed. Ruff format,
+Ruff lint, mypy, and `git diff --check` passed.
+
+### Boundary
+
+The fixture contains only the bounded observed body and redacted local
+references. No complete identifier, request URL, credential, dependency,
+live request, persistence, notification, collector, commit, or push was added
+by Phase 2. The result remains evidence about one observed response shape, not
+a general XON no-match contract.
+
+## 2026-09-15 — R6 Phase 1 minimal local watchdog workflow framing
+
+### Question
+
+Can Personal Watchdog define a small local workflow—`init → scan → compare →
+report → history`—that a consenting user can operate and understand while
+preserving R1/R2 truthfulness?
+
+### Proposed scope
+
+The first implementation target is one synthetic subject and one offline
+fixture source. The framing defines proposed command meanings, bounded local
+records, truthful report states, and an acceptance matrix covering baselines,
+unchanged results, exposure changes, disappearance, failure, and
+unverifiability.
+
+### Boundary
+
+This is documentation-only Phase 1 framing. No CLI, persistence, scheduler,
+notification, live adapter, credential flow, dependency, network request,
+commit, push, pull-request update, or merge was made. R1/R2/R3 semantics are
+unchanged, and failed or unverifiable sources remain non-comparable rather than
+clean or disappeared.
+
+### Status
+
+R6 framing is complete locally. Phase 2 requires explicit approval of the
+storage format, retention limits, exact offline command scope, and test matrix.
+
+## 2026-09-15 — R6 Phase 2 offline workflow execution
+
+### Approval and scope
+
+Peter approved the one-synthetic-subject, one-fixture-source workflow with
+bounded JSON state, at most 32 retained scans, manual commands, and the R6
+acceptance matrix. No live source, scheduler, notification, credential, or
+export was authorized.
+
+### Result
+
+Implemented `python -m personal_watchdog.cli` commands for `init`, fixture
+`scan`, `report --latest`, and `history`. The workflow passes fixture response
+envelopes through existing R2 and passes the resulting scans to existing R1
+comparison. It stores structured checks and events, not raw response
+envelopes.
+
+Completed fixture changes produce the existing baseline, unchanged, changed,
+and disappeared results. Failed and unverifiable fixture checks remain
+non-comparable and produce their guarding events without disappearance.
+
+### Verification
+
+Focused R6 tests: 5 passed. Full repository suite: 268 passed. Ruff format,
+Ruff lint, mypy, and `git diff --check` passed.
+
+### Boundary
+
+No live request, credential, scheduler, notification, export, dependency,
+commit, or push was added. The installed `watchdog` executable and real
+identifier workflow remain deferred.

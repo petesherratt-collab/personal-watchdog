@@ -11,17 +11,26 @@ must not be interpreted as proof that an identity is safe.
 
 ## Current status
 
-Milestone 0 establishes project policy and verification only. No scanner,
-network adapter, identity storage, or reporting implementation exists yet.
+The R6 offline workflow is implemented as a local module. It supports one
+synthetic subject, one fixture source, bounded JSON state, deterministic R1
+comparison, local reports, and local history. It does not perform live source
+checks, store raw response payloads, schedule scans, or send notifications.
 
-Planned commands, which are not implemented in this milestone, are:
+Run it from the repository with:
 
 ```text
-watchdog init
-watchdog scan --adapter fixture
-watchdog report --latest
-watchdog history
+python -m personal_watchdog.cli init
+python -m personal_watchdog.cli scan --adapter fixture --fixture baseline
+python -m personal_watchdog.cli scan --adapter fixture --fixture changed
+python -m personal_watchdog.cli report --latest
+python -m personal_watchdog.cli history
 ```
+
+The default local state directory is `.watchdog/`; use `--state-dir PATH` to
+choose another location. Available offline fixtures are `baseline`,
+`unchanged`, `changed`, `disappeared`, `failed`, and `unverifiable`. The
+planned installed `watchdog` executable, live adapters, scheduling, and
+notifications remain deferred.
 
 ## Development
 
