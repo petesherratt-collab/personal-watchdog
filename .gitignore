@@ -28,6 +28,7 @@ data/*
 evidence/
 reports/
 logs/
+.watchdog/
 *.log
 
 # Editor and operating-system files

@@ -885,3 +885,49 @@ checked, and `git diff --check` passed.
 The experiment remains bounded and inconclusive for live source mapping:
 R3/R2 preserves `unverifiable`, with no completed-empty or clean claim. No
 additional live request is warranted. Commit authorization remains separate.
+
+## 2026-09-15 — R5 Phase 1 framed locally
+
+Added the documentation-only R5 framing for offline XON contract
+reconciliation. The proposed experiment would test whether the exact observed
+R4 HTTP-200 `{"Error":"Not found","email":null}` shape can reproduce the
+existing R3/R2 `unverifiable` result without weakening semantics or making a
+new live request.
+
+No fixture, implementation, test, dependency, network request, commit, push,
+or pull-request update was made. Stop for review and explicit Phase 2 scope
+approval.
+
+## 2026-09-15 — R5 Phase 2 executed offline
+
+The approved R5 fixture and test were added locally. The existing R3/R2
+adapter reproduced `transport=ready` with source status `unverifiable`, reason
+`response_unverifiable`, and no findings. Focused R5 tests: 2 passed; full
+suite: 263 passed. Ruff format/lint, mypy, and `git diff --check` passed.
+
+No live request, dependency, semantic adapter change, R1 comparison,
+persistence, notification, collector, commit, or push was made. R5 remains a
+one-observation offline reconciliation, not a general XON no-match contract.
+
+## 2026-09-15 — R6 Phase 1 framed locally
+
+Added documentation-only framing for the minimal user workflow:
+`init → scan → compare → report → history`. The proposed first implementation
+uses one synthetic subject and one offline fixture source, with bounded local
+records and truthful handling of completed, failed, and unverifiable checks.
+
+No CLI, persistence, scheduler, notification, live request, dependency,
+commit, push, or pull-request update was made. R6 Phase 2 requires explicit
+approval of storage, retention, command, and test details.
+
+## 2026-09-15 — R6 Phase 2 executed offline
+
+Implemented the approved local workflow in `personal_watchdog/cli.py` with
+bounded JSON state and one synthetic fixture source. The commands now support
+initialization, fixture scans, latest reports, and retained history. Existing
+R1 comparison and R2 normalization remain the semantic owners.
+
+Focused R6 tests: 5 passed; full suite: 268 passed. Ruff format/lint, mypy,
+and `git diff --check` passed. No live request, real identifier, scheduler,
+notification, dependency, commit, or push was added. Changes remain local and
+uncommitted for review.
