@@ -1831,3 +1831,275 @@ unpushed for adversarial implementation review.
 ### Status
 
 Verification passed. No files were staged, committed, pushed, or merged.
+
+## 2026-09-11 — Frame R4 Phase 1 bounded live XON probe
+
+### Objective
+
+Frame the smallest approval-gated live experiment after the verified synthetic
+R3 and R3.5 checkpoints, without implementing the collector or opening a
+network connection.
+
+### Changes
+
+- Added `RESEARCH_004_BOUNDED_LIVE_XON_PROBE.md`.
+- Defined a one-request, reserved-domain synthetic check-email probe that
+  would translate only bounded I/O facts into the existing R3
+  `TransportAttempt`.
+- Preserved R3/R2/R1 ownership, failure visibility, the no-completed-empty
+  check-email rule, and the no-raw-payload/no-credential boundary.
+- Recorded explicit approval requirements for the future endpoint, synthetic
+  identifier, headers, finite timeouts, request budget, retention, and stop
+  conditions.
+
+### Verification
+
+Pending the post-edit repository checks recorded in the next handoff section.
+
+### Decisions
+
+No project-level decision was added to `DECISIONS.md`. R4 remains framing only;
+the live experiment is not authorized by this entry.
+
+### Gotchas
+
+- The R3 adapter accepts only an in-memory transport attempt; a future capture
+  layer must not duplicate its classification or XON/R2 semantics.
+- A successful live response would be one bounded source observation, not
+  evidence of completeness, ownership, safety, or notification usefulness.
+- The editable-install setuptools discovery issue remains a separate work
+  item and was not changed.
+
+### Repository state
+
+The new branch remains uncommitted and unpushed. Full verification and final
+diff/status inspection are required before handoff.
+
+## 2026-09-11 — Verify R4 Phase 1 framing
+
+### Verification
+
+- `./.venv/bin/python -m pytest -q` — 252 passed in 15.55 seconds.
+- `./.venv/bin/ruff format --check .` — 35 files already formatted.
+- `./.venv/bin/ruff check .` — all checks passed.
+- `./.venv/bin/mypy .` — success, no issues found in 17 source files.
+- `git diff --check` — passed.
+- Final diff and status inspection found only
+  `RESEARCH_004_BOUNDED_LIVE_XON_PROBE.md`, `BUILD_HISTORY.md`,
+  `RESEARCH_LOG.md`, and `PROGRESS_LOG.md` changed.
+
+### Decisions
+
+No project-level decision was added. The R4 probe remains approval-gated and
+unimplemented.
+
+### Gotchas
+
+- The checks validate the existing synthetic behavior and documentation only;
+  they do not establish live XposedOrNot compatibility, completeness,
+  freshness, coverage, ownership, or safety.
+- The editable-install setuptools discovery issue remains a separate work
+  item and was not changed.
+
+### Status
+
+Verification passed. No files were staged, committed, pushed, or merged. No
+live request or external action was performed.
+
+## 2026-09-11 — Execute approved R4 Phase 2 bounded live XON probe
+
+### Objective
+
+Execute exactly one approved bounded live probe against the documented free
+XposedOrNot check-email endpoint using only the reserved synthetic subject,
+then pass the captured attempt through the committed R3 adapter.
+
+### Changes
+
+- Added `personal_watchdog/r4_bounded_live_xon_probe.py`, a standard-library
+  one-shot probe with no retry, redirect following, persistence, or comparison.
+- Added `tests/test_r4_bounded_live_xon_probe.py` with five offline tests for
+  request shape, failure visibility, malformed success, size bounds, and
+  bounded output retention.
+- Executed one approved live request; the response was not retained raw.
+
+### Verification
+
+- Focused R4 tests: 5 passed.
+- Full suite: 257 passed.
+- Ruff format and lint passed.
+- mypy passed across 19 source files.
+- `git diff --check` passed.
+
+### Decisions
+
+No project-level decision was added. The result is a single bounded
+observation, not authorization for retries, monitoring, persistence,
+notifications, or broader live coverage.
+
+### Gotchas
+
+- The transport was ready, but the complete 34-byte HTTP-200 JSON body was
+  conservatively `unverifiable`; its exact shape was intentionally not
+  retained, so no more specific cause can be claimed.
+- This does not establish live service completeness, freshness, schema
+  stability, ownership, coverage, or safety.
+- The editable-install setuptools discovery issue remains a separate work
+  item and was not changed.
+
+### Status
+
+The probe run completed without a second request. No files were staged,
+committed, pushed, or merged.
+
+## 2026-09-12 — R4 Stage 1 adversarial offline review
+
+### Objective
+
+Review the R4 one-shot probe against its approved bounds and R3 ownership
+without making another network request or expanding it into a collector.
+
+### Corrections
+
+- Corrected timeout detection when `URLError` wraps a timeout cause.
+- Rejected non-text response-header metadata before constructing a bounded
+  attempt.
+- Redacted the complete synthetic identifier from the local report.
+- Added offline coverage for pre-status and post-status timeouts, duplicate
+  content types, redirect rejection, over-limit capture, and output redaction.
+
+### Verification
+
+- Full suite: 261 passed.
+- Ruff format and lint passed.
+- mypy passed across 19 source files.
+- `git diff --check` passed.
+
+### Decisions
+
+No project-level decision was added. The prior live result remains a single
+unverifiable observation and was not repeated.
+
+### Gotchas
+
+- The response body remains intentionally unavailable for diagnosing the
+  original 34-byte HTTP-200 unverifiable result.
+- The checks establish bounded local behavior only; they do not establish
+  live-service completeness, freshness, coverage, ownership, or safety.
+
+### Status
+
+Stage 1 review is complete. No files were staged, committed, pushed, or
+merged, and no additional live request was made.
+
+## 2026-09-12 — R4 Stage 2 conclusion
+
+### Result
+
+The bounded live experiment is inconclusive at the source-contract boundary:
+transport reached HTTP 200 with complete JSON bytes, while the existing R3/R2
+path returned `unverifiable`. The body was not retained, so no more specific
+service-response explanation is supported.
+
+### Decisions
+
+Stop R4 here. Do not retry, loosen the schema, infer completed-empty, compare
+the result, or begin monitoring. Any diagnostic follow-up requires a new
+bounded approval.
+
+### Gotchas
+
+- A ready transport response is not an accepted source response.
+- This result does not establish live completeness, freshness, coverage,
+  ownership, safety, or notification usefulness.
+
+### Status
+
+Stage 2 conclusion recorded. No additional live request, staging, commit, or
+push was performed.
+
+## 2026-09-13 — Execute approved R4 Stage 3 diagnostic follow-up
+
+### Objective
+
+Diagnose the observed 34-byte HTTP-200 `unverifiable` response with one
+additional bounded request and temporary diagnostic output, without retaining
+the body in a file or broadening the probe.
+
+### Changes
+
+- Added explicit `--diagnostic` output that exposes only the bounded response
+  bytes as lowercase hex; normal output remains redacted.
+- Added offline coverage for diagnostic output.
+- Made exactly one approved follow-up request using the same synthetic
+  identifier and no credentials, retry, or redirect.
+
+### Verification
+
+- Focused R4 tests: 9 passed.
+- Full suite: 261 passed.
+- Ruff format and lint passed.
+- mypy passed across 19 source files.
+- `git diff --check` passed.
+
+### Result
+
+The body decoded to `{"Error":"Not found","email":null}` over HTTP 200 with
+complete JSON transport. R3/R2 correctly preserved `unverifiable`; no
+completed-empty result or clean claim was produced.
+
+### Decisions
+
+No project-level decision was added. This is one observed no-match shape, not
+a general service contract or completeness finding.
+
+### Gotchas
+
+- Diagnostic output was bounded and not written to disk, but it is still
+  response data and must not become a default output mode.
+- The observed HTTP-200 no-match shape does not authorize changing the R3
+  check-email semantics or importing analytics empty semantics.
+
+### Status
+
+Stage 3 is complete. No third request, staging, commit, or push was performed.
+
+## 2026-09-13 — R4 Stage 4 final review and handoff
+
+### Objective
+
+Complete final review and leave the R4 branch ready for separately authorized
+commit, without making another network request or changing repository history.
+
+### Review
+
+- Reviewed the complete intended R4 change set and boundary-sensitive source
+  references.
+- Confirmed branch, HEAD, worktree, staging state, and absence of a remote
+  tracking branch for the experiment branch.
+- Confirmed the probe remains synthetic-only, one-shot, bounded, and without
+  credentials, retries, redirects, persistence, comparison, notification, or
+  collector behavior.
+
+### Verification
+
+- Full suite: 261 passed.
+- Ruff format: passed.
+- Ruff lint: passed.
+- mypy: passed using the configured `tests` target; 6 source files checked.
+- `git diff --check`: passed.
+
+### Result
+
+R4 is complete as a bounded live observation. The observed no-match body does
+not change R3/R2 semantics: the result remains `unverifiable`, not
+completed-empty or clean. The branch is ready for a separately authorized
+commit.
+
+### Gotchas
+
+- The diagnostic observation is evidence about one request, not a general
+  source contract or completeness guarantee.
+- The final review did not make a network request or alter the two-request
+  experiment count.
+- No files were staged; no commit or push was performed.

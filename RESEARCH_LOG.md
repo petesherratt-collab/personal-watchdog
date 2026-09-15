@@ -1280,3 +1280,158 @@ suite passed with 252 tests. Ruff format and lint, mypy, and `git diff --check`
 also passed. These checks prove synthetic deterministic behavior and fixture
 integrity only; they do not prove live-service compatibility, completeness, or
 freshness.
+
+## 2026-09-11 — Frame R4 Phase 1 bounded live XON probe
+
+### Research question
+
+Can one explicitly approved, one-shot live request for an obviously synthetic
+subject be captured into the existing bounded `TransportAttempt` contract and
+passed through the committed R3 adapter without converting failure,
+incompleteness, ambiguity, or zero findings into completed-empty, disappearance,
+or a clean claim?
+
+### Scope and reconciliation
+
+The authoritative starting point is commit `573d44c` on local branch
+`experiment/r4-bounded-live-xon-probe`, with the worktree clean before edits.
+R3 and R3.5 were inspected first. The R3 adapter remains intentionally
+I/O-free, and R3.5 remains synthetic and offline. R4 Phase 1 frames only a
+future one-shot HTTPS check-email probe using one reserved-domain synthetic
+identifier, no credentials, no retry, no redirect, and the existing R3 bounds
+and classifications.
+
+### Framing result
+
+Added `RESEARCH_004_BOUNDED_LIVE_XON_PROBE.md`. The proposed capture layer
+owns only bounded I/O facts and translates them to the existing
+`TransportAttempt`; the committed R3 adapter remains the owner of transport,
+XON, and R2 semantics. The first live probe has no completed-empty path and
+does not add R1 comparison, persistence, scheduling, notification, or archive
+behavior.
+
+### Decision boundary
+
+No live request, identifier submission, collector, HTTP client, credential,
+dependency, source change, test change, persistence, notification, staging,
+commit, push, or merge was performed. Phase 2 requires explicit approval of
+the exact synthetic identifier, endpoint, headers, finite timeouts, one-request
+budget, retention fields, and stop conditions.
+
+## 2026-09-11 — Verify R4 Phase 1 framing
+
+### Verification
+
+- `./.venv/bin/python -m pytest -q` — 252 passed in 15.55 seconds.
+- `./.venv/bin/ruff format --check .` — 35 files already formatted.
+- `./.venv/bin/ruff check .` — all checks passed.
+- `./.venv/bin/mypy .` — success, no issues found in 17 source files.
+- `git diff --check` — passed.
+- Final status review found only the new R4 framing document and the three
+  permitted append-only history/log files changed; no source, test, fixture,
+  dependency, or reference file changed.
+
+### Boundary
+
+Verification covers documentation and the existing synthetic implementation
+checkpoint only. No live request, network operation, identifier submission,
+collector, or R4 Phase 2 implementation was performed. The branch remains
+unstaged, uncommitted, and unpushed for adversarial review.
+
+## 2026-09-11 — Execute approved R4 Phase 2 bounded live XON probe
+
+### Scope
+
+Peter approved one execution of the framed one-shot probe using the reserved
+synthetic subject `r4-probe-01@example.invalid`, the documented free
+check-email endpoint, no credentials, one request, no retry, no redirect, and
+the existing R3 bounds. No collector, scheduler, persistence, comparison,
+notification, or archive was enabled.
+
+### Observation
+
+The probe made exactly one request. It received HTTP 200 with five retained
+headers, a complete 34-byte body, and derived `application/json`. The existing
+R3 transport classification was `ready`; the existing R3/R2 result was
+`unverifiable` with reason code `response_unverifiable` and no finding keys.
+The raw body was not retained or printed, so its exact shape and cause of
+unverifiability remain unknown.
+
+### Result and boundary
+
+The live boundary preserved a non-clean, non-comparable result. This single
+observation does not establish service completeness, freshness, schema
+stability, ownership, coverage, or safety. No retry or follow-up request was
+made. Any further live work requires a new bounded approval.
+
+## 2026-09-12 — R4 Stage 1 adversarial offline review
+
+### Review result
+
+The offline review corrected timeout detection for `URLError`-wrapped timeout
+causes, rejected non-text response-header metadata before bounded capture, and
+redacted the complete synthetic identifier from the local report. It added
+tests for pre-status timeout, post-status read timeout, duplicate content type,
+redirect rejection, over-limit capture, and raw-body/full-URL absence.
+
+### Verification and boundary
+
+The full suite passed with 261 tests; Ruff format and lint passed; mypy passed
+across 19 source files; and `git diff --check` passed. The previous live
+observation was not repeated. No network request, collector, persistence,
+comparison, notification, staging, commit, or push was performed.
+
+## 2026-09-12 — R4 Stage 2 conclusion
+
+### Conclusion
+
+The live transport boundary worked for one request, but the frozen R3
+check-email contract returned `unverifiable` for the complete HTTP-200 JSON
+response. Because the body was not retained, the experiment cannot distinguish
+a no-match response from another undocumented response. R4 is therefore
+inconclusive at the live source-contract boundary.
+
+### Decision boundary
+
+Do not retry, loosen the schema, invent completed-empty semantics, compare the
+result, or begin monitoring. Any diagnostic follow-up requires separate
+approval of a more specific bounded retention rule and another explicitly
+approved request.
+
+## 2026-09-13 — Execute approved R4 Stage 3 diagnostic follow-up
+
+### Observation
+
+The approved second request used the same reserved-domain synthetic identifier
+and made exactly one request with diagnostic output enabled. It returned HTTP
+200, five retained headers, a complete 34-byte `application/json` body, and
+the exact decoded body `{"Error":"Not found","email":null}`.
+
+### Result
+
+This confirms the observed no-match body shape for this request. The existing
+R3/R2 path correctly returned `unverifiable` with
+`response_unverifiable`, because the selected check-email family has no
+completed-empty path and this body does not satisfy its success predicate.
+This does not establish that all no-match responses use HTTP 200 or that the
+service is complete, fresh, stable, or safe.
+
+### Boundary
+
+The bounded diagnostic bytes were emitted as hex and were not written to a
+file. No retry, third request, persistence, comparison, notification, or
+collector behavior was added. Further live work requires new approval.
+
+## 2026-09-13 — R4 Stage 4 final review and handoff
+
+The final review confirmed that only the intended R4 framing, bounded
+one-shot probe, focused tests, and append-only records are present. The branch
+remains at `573d44c` on
+`experiment/r4-bounded-live-xon-probe`; no files are staged and no commit or
+push was made. The two approved invocations made one request each. The
+diagnostic observation is limited to one HTTP-200 no-match shape, while the
+frozen R3 contract correctly remains `unverifiable`.
+
+R4 is complete as a bounded experiment and does not authorize a live adapter,
+completed-empty mapping, clean claim, monitoring, or another request. The
+branch is ready for a separately authorized commit.
