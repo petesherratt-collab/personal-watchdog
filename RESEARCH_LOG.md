@@ -1552,3 +1552,74 @@ Ruff lint, mypy, and `git diff --check` passed.
 No live request, credential, scheduler, notification, export, dependency,
 commit, or push was added. The installed `watchdog` executable and real
 identifier workflow remain deferred.
+
+## 2026-09-16 — R7 Phase 1 approved-identifier configuration framing
+
+### Question
+
+Can Personal Watchdog represent one consenting user’s explicitly approved
+identifier with the minimum local information needed for a later scan, while
+keeping the sensitive value out of ordinary reports, history, logs, fixtures,
+and comparison records?
+
+### Proposed scope
+
+The first implementation target is configuration only: one synthetic email or
+username profile, an explicit approval and enablement gate, a stable opaque
+`subject_ref`, redacted inspection, and safe separation from R6 scan history.
+The profile value remains local-sensitive data; encryption and key management
+are not assumed.
+
+### Boundary
+
+This is documentation-only Phase 1 framing on branch
+`experiment/r7-approved-identifier-config`, based on merged baseline
+`2ab2510`. No real identifier, profile storage, CLI change, live request,
+credential, dependency, scheduler, notification, export, commit, or push was
+made. R1/R2/R6 semantics remain unchanged.
+
+### Status
+
+R7 Phase 1 framing is complete locally. Phase 2 requires explicit approval of
+the profile schema, protected input channel, permission model, R6 migration
+choice, retention behavior, and synthetic test matrix.
+
+## 2026-09-16 — R7 Phase 2 approved-identifier configuration execution
+
+### Approval and scope
+
+Peter approved implementation of the bounded offline R7 profile scope. The
+scope is limited to synthetic email and username values, explicit local
+approval, protected input, redacted inspection, opaque subject references,
+profile disablement, and fixture-only scan selection. No real identifier,
+live request, credential, dependency, scheduler, notification, export,
+commit, push, or pull request was authorized.
+
+### Result
+
+Added a separate versioned local profile store with a fixed limit of eight
+profiles, strict bounded validation, explicit `--approve`, non-echoed
+interactive input, redacted list/add output, atomic replacement, and `0600`
+profile-file permissions. Added CLI operations for profile add/list/disable
+and optional selection of an enabled approved profile for the existing offline
+fixture scan. R6 config/history remain unchanged and the fixture does not
+receive or retain the profile value.
+
+### Verification
+
+Focused R7 plus R6 compatibility tests: 11 passed. Full-suite verification,
+style, type, diff, and final worktree inspection follow after this record.
+
+### Boundary
+
+This demonstrates local configuration and redaction behavior only. It does
+not prove identity ownership, source coverage, encryption, secure deletion,
+or live-source compatibility. Failed and unverifiable source results remain
+owned by the existing R1/R2 path and cannot become clean or disappeared.
+
+### Verification correction
+
+The focused set was expanded to include successful username configuration and
+duplicate-value rejection: 13 tests passed. The full repository suite then
+passed with 276 tests; Ruff format/lint, mypy, `git diff --check`, and the
+manual offline CLI smoke test also passed.

@@ -2263,3 +2263,93 @@ bounded to 32 scans.
   retention deletion, correction, corruption recovery, and export remain open.
 - No real identifier, credential, scheduler, notification, live adapter,
   dependency, commit, or push was added.
+
+## 2026-09-16 — R7 Phase 1 approved-identifier configuration framing
+
+### Objective
+
+Frame the first ordered R7 focus: local configuration for an explicitly
+approved identifier, without implementing profile storage or handling real
+identity data.
+
+### Changes
+
+- Added `RESEARCH_007_APPROVED_IDENTIFIER_CONFIGURATION.md`.
+- Defined a provisional profile boundary separating sensitive values from
+  opaque scan/history references.
+- Framed explicit approval, enablement, protected input, redacted output,
+  R6 migration, retention, and synthetic acceptance requirements.
+
+### Verification
+
+- Confirmed local `main` was synchronized to merge commit `2ab2510`.
+- Created clean local branch `experiment/r7-approved-identifier-config`.
+- Confirmed no production code, fixture, test, dependency, or network request
+  was added by R7.
+- `git diff --check`: passed.
+
+### Result
+
+R7 remains framed only. The next phase must choose the profile schema, input
+channel, permission model, and compatibility behavior before implementation.
+
+### Gotchas
+
+- A local approval record does not prove identity ownership or source truth.
+- Complete identifiers must remain out of normal reports, history, logs,
+  fixtures, and committed expected output.
+- Encryption, secure deletion, key management, and compromised-host resistance
+  remain separate design questions.
+- No real identifier, live request, commit, or push was made.
+
+## 2026-09-16 — R7 Phase 2 approved-identifier configuration execution
+
+### Objective
+
+Implement the explicitly approved offline R7 profile boundary over the merged
+R6 workflow, using synthetic values only and preserving R1/R2 semantics.
+
+### Changes
+
+- Added `personal_watchdog/profiles.py` with versioned, bounded local profile
+  storage for `email` and `username` kinds.
+- Added explicit approval and protected input requirements, strict validation,
+  opaque generated subject references, redacted listing, disablement, atomic
+  writes, and restrictive `0600` profile-file permissions.
+- Extended `personal_watchdog/cli.py` with profile add/list/disable commands
+  and optional `scan --subject-ref` selection for enabled approved profiles.
+- Added `tests/test_r7_profiles.py` for redaction, reload, approval and input
+  validation, scan selection, R6 state compatibility, disablement, and
+  history preservation.
+- Updated the README and R7 research record with the implemented offline
+  usage and boundary.
+
+### Verification
+
+- Focused R7 plus R6 compatibility tests: 11 passed.
+- Ruff format and lint passed for the changed Python files.
+- mypy passed for the changed Python files.
+- `git diff --check` and full repository verification remain in progress.
+
+### Result
+
+The local profile is kept separate from R6 scan history. Ordinary profile,
+scan, report, and history output exposes only opaque references and bounded
+metadata. A disabled profile cannot be selected for a new scan.
+
+### Gotchas
+
+- The profile JSON contains the sensitive value by design and is local-only;
+  `0600` permissions are not encryption or protection from a compromised
+  host.
+- The offline fixture does not use the profile value, so this phase proves
+  selection and redaction, not live adapter behavior or source accuracy.
+- No real identifier, live request, credential, dependency, scheduler,
+  notification, export, commit, or push was added.
+
+### Verification correction
+
+The focused R7/R6 set was expanded to 13 passing tests to cover successful
+username configuration and duplicate-value rejection. The full repository
+suite passed with 276 tests. Ruff format/lint, mypy, `git diff --check`, and
+the manual offline CLI smoke test passed.

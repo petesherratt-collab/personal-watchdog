@@ -11,10 +11,12 @@ must not be interpreted as proof that an identity is safe.
 
 ## Current status
 
-The R6 offline workflow is implemented as a local module. It supports one
-synthetic subject, one fixture source, bounded JSON state, deterministic R1
-comparison, local reports, and local history. It does not perform live source
-checks, store raw response payloads, schedule scans, or send notifications.
+The R7 offline workflow is implemented as a local module over the R6 workflow.
+It supports bounded local profiles for explicitly approved synthetic email or
+username values, opaque subject references, one fixture source, deterministic
+R1 comparison, local reports, and local history. It does not perform live
+source checks, store raw response payloads, schedule scans, or send
+notifications.
 
 Run it from the repository with:
 
@@ -25,6 +27,19 @@ python -m personal_watchdog.cli scan --adapter fixture --fixture changed
 python -m personal_watchdog.cli report --latest
 python -m personal_watchdog.cli history
 ```
+
+To configure a synthetic profile, run the add command and enter the value at
+the non-echo prompt. The value is not placed in the command line:
+
+```text
+python -m personal_watchdog.cli profile add --kind username --purpose offline-test --approve --value-stdin
+python -m personal_watchdog.cli profile list --json
+python -m personal_watchdog.cli scan --adapter fixture --fixture baseline --subject-ref r7-subject-001
+python -m personal_watchdog.cli profile disable --subject-ref r7-subject-001
+```
+
+Only synthetic values are in scope for this phase. Profile listing and scan
+history show opaque references and bounded metadata, not the sensitive value.
 
 The default local state directory is `.watchdog/`; use `--state-dir PATH` to
 choose another location. Available offline fixtures are `baseline`,

@@ -931,3 +931,34 @@ Focused R6 tests: 5 passed; full suite: 268 passed. Ruff format/lint, mypy,
 and `git diff --check` passed. No live request, real identifier, scheduler,
 notification, dependency, commit, or push was added. Changes remain local and
 uncommitted for review.
+
+## 2026-09-16 — R7 Phase 1 framed locally
+
+Added documentation-only framing for approved-identifier configuration, the
+first ordered R7 focus. It defines explicit approval and enablement, opaque
+subject references, redacted ordinary output, local-sensitive profile values,
+and separation from R6 scan history.
+
+No profile storage, CLI change, real identifier, live request, dependency,
+commit, push, scheduler, notification, or export was added. Phase 2 requires
+explicit approval of the schema, input channel, permissions, migration,
+retention, and synthetic test scope.
+
+## 2026-09-16 — R7 Phase 2 execution in progress
+
+Peter approved the offline implementation scope. The local branch now has the
+bounded profile store, CLI profile operations, optional approved-profile
+fixture selection, and focused R7 tests. The focused R7/R6 set passes 11 tests;
+full-suite verification and final diff/worktree review are still pending.
+
+No real identifier or live request has been used. No commit, push, pull
+request, scheduler, notification, export, or dependency change has been made.
+
+## 2026-09-16 — R7 Phase 2 verified locally
+
+The focused R7/R6 set passed 13 tests and the full repository suite passed 276
+tests. Ruff format/lint, mypy, `git diff --check`, and the manual offline CLI
+smoke test passed. The branch remains uncommitted and unpushed for review.
+
+The implementation remains limited to synthetic local profiles and offline
+fixture selection; it does not authorize or perform live collection.
