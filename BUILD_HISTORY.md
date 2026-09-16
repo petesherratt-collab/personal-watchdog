@@ -2353,3 +2353,96 @@ The focused R7/R6 set was expanded to 13 passing tests to cover successful
 username configuration and duplicate-value rejection. The full repository
 suite passed with 276 tests. Ruff format/lint, mypy, `git diff --check`, and
 the manual offline CLI smoke test passed.
+
+## 2026-09-16 — R8 Phase 1 profile retention and recovery framing
+
+### Objective
+
+Frame the next ordered research question after R7: how local profile
+retention, disablement, deletion, corruption, interruption, and recovery can
+remain bounded and truthful.
+
+### Changes
+
+- Added `RESEARCH_008_PROFILE_RETENTION_RECOVERY.md`.
+- Reconciled the current R7 profile sidecar, eight-profile limit, `0600`
+  permissions, atomic replacement, disable-only behavior, and independent R6
+  32-scan bound.
+- Defined proposed state distinctions, fail-closed malformed-state handling,
+  history preservation, interruption tests, and explicit Phase 2 choices.
+
+### Verification
+
+- Confirmed clean local `main` at merged R7 commit `81e979c`.
+- Created clean local branch `experiment/r8-profile-retention-recovery`.
+- Confirmed no production code, fixture, test, dependency, or network request
+  was added by R8 framing.
+- Documentation/worktree checks remain to be completed after this record.
+
+### Result
+
+R8 remains documentation-only and proposes no automatic deletion, backup,
+restore, secure-erasure claim, or universal durability claim.
+
+### Gotchas
+
+- Current atomic replacement does not prove power-loss durability or protect
+  against a compromised host.
+- Disablement currently retains the profile value; deletion and re-enable are
+  separate policy decisions, not implied behavior.
+- A missing or malformed profile store must never become an empty store or a
+  source-level clean result.
+- No real identifier, live request, staging, commit, push, or pull request
+  was made.
+
+## 2026-09-16 — R8 Phase 2 conservative retention and recovery execution
+
+### Objective
+
+Implement the approved conservative R8 subset over the R7 profile store:
+fail-closed missing state, preserve valid state across interrupted writes,
+ignore stale temporary files, and keep profile/history bounds independent.
+
+### Changes
+
+- Changed `load_profiles` so it no longer creates a missing profile sidecar;
+  missing state is reported visibly.
+- Added `tests/test_r8_profile_recovery.py` covering missing, malformed,
+  wrong-version, unsupported-field, interrupted-write, stale-temporary-file,
+  and independent-bound behavior.
+- Kept R7 disable-only retention, opaque history, R1/R2 semantics, and the
+  existing bounded atomic replacement mechanism unchanged.
+- Did not add deletion, backup, restore, re-enable, or automatic age-based
+  retention.
+- Updated the R8 research record with the executed conservative boundary.
+
+### Verification
+
+- Focused R7/R8 tests: 16 passed.
+- Ruff format and lint passed for the changed Python files.
+- mypy passed on 25 source files.
+- Full repository suite: 284 passed.
+- `git diff --check`: passed.
+
+### Result
+
+Unavailable or malformed profile state cannot be silently converted into an
+empty store. An injected failure before replacement leaves the prior valid
+profile target intact, and a stale temporary file cannot override it.
+
+### Gotchas
+
+- The existing replacement mechanism does not prove power-loss durability,
+  filesystem-wide atomicity, or secure deletion.
+- Disablement retains the profile value; deletion, backup, restore, and
+  re-enable remain separate policy decisions.
+- No real identifier, live request, credential, dependency, scheduler,
+  notification, export, commit, push, or pull request was added.
+
+### Verification update
+
+- Full repository suite: 276 passed.
+- Ruff format and lint: passed.
+- mypy: passed on 24 source files.
+- `git diff --check`: passed.
+- No production code changed; R8 remains uncommitted and unpushed.

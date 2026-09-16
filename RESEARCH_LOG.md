@@ -1623,3 +1623,70 @@ The focused set was expanded to include successful username configuration and
 duplicate-value rejection: 13 tests passed. The full repository suite then
 passed with 276 tests; Ruff format/lint, mypy, `git diff --check`, and the
 manual offline CLI smoke test also passed.
+
+## 2026-09-16 — R8 Phase 1 profile retention and recovery framing
+
+### Question
+
+Can Personal Watchdog retain, disable, remove, and recover local approved
+identifier profiles without silently changing consent state, rewriting prior
+scan evidence, or treating damaged state as a clean or empty result?
+
+### Scope
+
+Added documentation-only framing for the next ordered boundary after R7:
+explicit disablement versus deletion, bounded profile and history retention,
+interrupted writes, malformed or missing state, and the limits of local
+recovery. The framing is based on merged R7 commit `81e979c` and branch
+`experiment/r8-profile-retention-recovery`.
+
+### Boundary
+
+No retention or recovery implementation, deletion command, backup, restore,
+fixture, test, dependency, real identifier, live request, credential,
+scheduler, notification, export, staging, commit, push, pull request, or
+merge was made. R1/R2 semantics and the implemented R7 disable-only behavior
+remain unchanged.
+
+### Status
+
+R8 Phase 1 framing is complete locally. Phase 2 requires explicit approval of
+the retention policy, deletion choice, malformed-state behavior, interruption
+tests, and recovery boundary.
+
+### Verification
+
+The documentation-only branch passed the full repository suite with 276
+tests. Ruff format/lint, mypy, and `git diff --check` also passed. No
+production behavior was changed.
+
+## 2026-09-16 — R8 Phase 2 conservative retention and recovery execution
+
+### Approval and scope
+
+Peter approved the conservative offline R8 subset: fail-closed missing and
+malformed profile state, preserved opaque history, bounded atomic replacement,
+stale temporary-file isolation, and independent profile/history limits. No
+delete, backup, restore, re-enable, secure-erasure claim, live request, real
+identifier, dependency, commit, push, or pull request was authorized.
+
+### Result
+
+Changed profile loading so a missing `profiles.json` is reported as unavailable
+instead of being silently recreated as an empty store. Added offline tests for
+missing, malformed, wrong-version, unsupported-field, interrupted-write, and
+stale-temporary-file cases, plus independent retention bounds. R7 disable-only
+behavior and R1/R2 semantics remain unchanged.
+
+### Verification
+
+Focused R7/R8 tests: 16 passed. Full-suite verification passed with 284
+tests. Ruff format/lint, mypy on 25 source files, and `git diff --check` also
+passed.
+
+### Boundary
+
+The result does not establish filesystem durability, encryption, secure
+deletion, backup authenticity, recovery from disk failure, or protection from
+a compromised host. Missing or malformed profile state remains distinct from
+an empty profile set and cannot produce a source-level clean result.
