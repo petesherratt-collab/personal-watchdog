@@ -16,6 +16,17 @@ from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any, Literal, cast
 
+from personal_watchdog.profiles import (
+    PROFILE_KINDS,
+    ProfileError,
+    ProfileKind,
+    add_profile,
+    disable_profile,
+    ensure_profiles,
+    read_value_from_stdin,
+    redacted_profiles,
+    selected_profile,
+)
 from personal_watchdog.r1 import (
     ComparisonReport,
     ComparisonResult,
@@ -526,21 +537,34 @@ def _cmd_init(state_dir: Path) -> int:
         state_dir / "history.json",
         {"history_version": STATE_VERSION, "next_scan_number": 1, "scans": []},
     )
+    ensure_profiles(state_dir)
     print(f"INITIALIZED subject_ref={DEFAULT_SUBJECT_REF} source_id=fixture-source")
     return 0
 
 
-def _cmd_scan(state_dir: Path, adapter: str, fixture: FixtureName) -> int:
+def _cmd_scan(
+    state_dir: Path,
+    adapter: str,
+    fixture: FixtureName,
+    subject_ref: str | None,
+) -> int:
     if adapter != "fixture":
         raise WorkflowError("only the offline fixture adapter is available")
     _ensure_state(state_dir)
     config, source = _load_config(state_dir)
     history = _load_history(state_dir)
     records = _load_records(history)
+    selected_ref = cast(str, config["subject_ref"])
+    if subject_ref is not None:
+        try:
+            selected = selected_profile(state_dir, subject_ref)
+        except ProfileError as error:
+            raise WorkflowError(str(error)) from error
+        selected_ref = cast(str, selected["subject_ref"])
     number = cast(int, history.get("next_scan_number"))
     scan = _make_scan(
         scan_id=f"r6-scan-{number:03d}",
-        subject_ref=cast(str, config["subject_ref"]),
+        subject_ref=selected_ref,
         source=source,
         fixture=fixture,
     )
@@ -557,6 +581,65 @@ def _cmd_scan(state_dir: Path, adapter: str, fixture: FixtureName) -> int:
         },
     )
     print(_human_report(retained[-1]), end="")
+    return 0
+
+
+def _cmd_profile_add(
+    state_dir: Path,
+    kind: ProfileKind,
+    purpose: str,
+    approve: bool,
+    value_stdin: bool,
+) -> int:
+    _ensure_state(state_dir)
+    if not approve:
+        raise WorkflowError("profile add requires explicit --approve")
+    if not value_stdin:
+        raise WorkflowError("profile add requires --value-stdin")
+    try:
+        profile = add_profile(
+            state_dir,
+            kind=kind,
+            value=read_value_from_stdin(),
+            purpose=purpose,
+        )
+    except ProfileError as error:
+        raise WorkflowError(str(error)) from error
+    print(
+        f"PROFILE_ADDED subject_ref={profile['subject_ref']} kind={profile['kind']} "
+        f"approved={str(profile['approved']).upper()} "
+        f"enabled={str(profile['enabled']).upper()}"
+    )
+    return 0
+
+
+def _cmd_profile_list(state_dir: Path, json_mode: bool) -> int:
+    _ensure_state(state_dir)
+    try:
+        profiles = redacted_profiles(state_dir)
+    except ProfileError as error:
+        raise WorkflowError(str(error)) from error
+    if json_mode:
+        print(_canonical_json({"profiles": profiles}))
+    else:
+        for profile in profiles:
+            print(
+                f"PROFILE subject_ref={profile['subject_ref']} kind={profile['kind']} "
+                f"approved={str(profile['approved']).upper()} "
+                f"enabled={str(profile['enabled']).upper()} "
+                f"purpose={profile['purpose']}"
+            )
+        print(f"PROFILES count={len(profiles)}")
+    return 0
+
+
+def _cmd_profile_disable(state_dir: Path, subject_ref: str) -> int:
+    _ensure_state(state_dir)
+    try:
+        disable_profile(state_dir, subject_ref)
+    except ProfileError as error:
+        raise WorkflowError(str(error)) from error
+    print(f"PROFILE_DISABLED subject_ref={subject_ref}")
     return 0
 
 
@@ -603,6 +686,24 @@ def _parser() -> argparse.ArgumentParser:
     scan.add_argument("--state-dir", type=Path, default=Path(".watchdog"))
     scan.add_argument("--adapter", choices=("fixture",), required=True)
     scan.add_argument("--fixture", choices=FIXTURE_NAMES, default="baseline")
+    scan.add_argument("--subject-ref")
+
+    profile = commands.add_parser("profile", help="manage local approved profiles")
+    profile_commands = profile.add_subparsers(dest="profile_command", required=True)
+    profile_add = profile_commands.add_parser("add", help="add one approved profile")
+    profile_add.add_argument("--state-dir", type=Path, default=Path(".watchdog"))
+    profile_add.add_argument("--kind", choices=PROFILE_KINDS, required=True)
+    profile_add.add_argument("--purpose", default="personal-watchdog")
+    profile_add.add_argument("--approve", action="store_true")
+    profile_add.add_argument("--value-stdin", action="store_true")
+    profile_list = profile_commands.add_parser("list", help="list redacted profiles")
+    profile_list.add_argument("--state-dir", type=Path, default=Path(".watchdog"))
+    profile_list.add_argument("--json", action="store_true", dest="json_mode")
+    profile_disable = profile_commands.add_parser(
+        "disable", help="disable one profile without rewriting history"
+    )
+    profile_disable.add_argument("--state-dir", type=Path, default=Path(".watchdog"))
+    profile_disable.add_argument("--subject-ref", required=True)
 
     report = commands.add_parser("report", help="render the latest local report")
     report.add_argument("--state-dir", type=Path, default=Path(".watchdog"))
@@ -622,8 +723,25 @@ def main(argv: Sequence[str] | None = None) -> int:
             return _cmd_init(args.state_dir)
         if args.command == "scan":
             return _cmd_scan(
-                args.state_dir, args.adapter, cast(FixtureName, args.fixture)
+                args.state_dir,
+                args.adapter,
+                cast(FixtureName, args.fixture),
+                args.subject_ref,
             )
+        if args.command == "profile":
+            if args.profile_command == "add":
+                return _cmd_profile_add(
+                    args.state_dir,
+                    cast(ProfileKind, args.kind),
+                    args.purpose,
+                    args.approve,
+                    args.value_stdin,
+                )
+            if args.profile_command == "list":
+                return _cmd_profile_list(args.state_dir, args.json_mode)
+            if args.profile_command == "disable":
+                return _cmd_profile_disable(args.state_dir, args.subject_ref)
+            raise WorkflowError("unknown profile command")
         if args.command == "report":
             if not args.latest:
                 raise WorkflowError("report requires --latest")
@@ -631,7 +749,7 @@ def main(argv: Sequence[str] | None = None) -> int:
         if args.command == "history":
             return _cmd_history(args.state_dir, args.json_mode)
         raise WorkflowError("unknown command")
-    except WorkflowError as error:
+    except (ProfileError, WorkflowError) as error:
         print(f"ERROR {error}", file=sys.stderr)
         return 2
 
