@@ -142,8 +142,12 @@ def _validate_profile(value: object) -> dict[str, Any]:
 
 
 def load_profiles(state_dir: Path) -> dict[str, Any]:
-    ensure_profiles(state_dir)
-    value = _read(_path(state_dir))
+    path = _path(state_dir)
+    if not path.exists():
+        raise ProfileError("local profiles are missing")
+    if not path.is_file():
+        raise ProfileError("local profiles path is not a file")
+    value = _read(path)
     if value.get("profiles_version") != PROFILE_VERSION:
         raise ProfileError("unsupported local profiles version")
     profiles = value.get("profiles")

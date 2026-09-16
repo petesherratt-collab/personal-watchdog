@@ -962,3 +962,42 @@ smoke test passed. The branch remains uncommitted and unpushed for review.
 
 The implementation remains limited to synthetic local profiles and offline
 fixture selection; it does not authorize or perform live collection.
+
+## 2026-09-16 — R8 Phase 1 framed locally
+
+Added documentation-only framing for profile retention and recovery on branch
+`experiment/r8-profile-retention-recovery`, based on merged R7 commit
+`81e979c`. The framing covers disablement, possible deletion, bounded local
+retention, malformed state, interrupted writes, recovery, and preservation of
+opaque scan history.
+
+No implementation, fixture, test, dependency, real identifier, live request,
+staging, commit, push, pull request, scheduler, notification, or export was
+made. Phase 2 requires explicit approval of the retention policy, deletion
+choice, corruption behavior, interruption tests, and recovery boundary.
+
+The framing branch passed the full 276-test suite, Ruff format/lint, mypy,
+and `git diff --check`. No production behavior changed, and the framing
+remains uncommitted and unpushed pending review.
+
+## 2026-09-16 — R8 Phase 2 conservative subset in progress
+
+Peter approved the conservative offline retention/recovery subset. The profile
+loader now fails closed on a missing sidecar, and focused tests cover malformed
+state, interrupted writes, stale temporary files, and independent bounds.
+Focused R7/R8 verification passes 16 tests; full verification is pending.
+
+No deletion, backup, restore, re-enable, real identifier, live request,
+dependency, commit, push, pull request, scheduler, notification, or export was
+added.
+
+## 2026-09-16 — R8 Phase 2 conservative subset verified locally
+
+Focused R7/R8 tests passed 16 tests and the full repository suite passed 284
+tests. Ruff format/lint, mypy on 25 source files, and `git diff --check` also
+passed. The branch remains uncommitted and unpushed for review.
+
+The implemented boundary remains fail-closed missing/malformed profile state,
+preserved opaque history, interrupted-write protection, and independent
+bounds. Deletion, backup, restore, re-enable, and secure-erasure claims remain
+out of scope.
