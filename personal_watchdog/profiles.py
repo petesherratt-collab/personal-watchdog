@@ -235,6 +235,35 @@ def disable_profile(state_dir: Path, subject_ref: str) -> None:
     raise ProfileError("profile reference was not found")
 
 
+def enable_profile(state_dir: Path, subject_ref: str, *, approved: bool) -> None:
+    if not approved:
+        raise ProfileError("profile enable requires explicit --approve")
+    profiles = load_profiles(state_dir)
+    for profile in profiles["profiles"]:
+        if profile["subject_ref"] == subject_ref:
+            profile["approved"] = True
+            profile["enabled"] = True
+            _write(_path(state_dir), profiles)
+            return
+    raise ProfileError("profile reference was not found")
+
+
+def delete_profile(state_dir: Path, subject_ref: str) -> None:
+    profiles = load_profiles(state_dir)
+    for profile in profiles["profiles"]:
+        if profile["subject_ref"] == subject_ref:
+            if profile["enabled"]:
+                raise ProfileError("profile must be disabled before deletion")
+            profiles["profiles"] = [
+                item
+                for item in profiles["profiles"]
+                if item["subject_ref"] != subject_ref
+            ]
+            _write(_path(state_dir), profiles)
+            return
+    raise ProfileError("profile reference was not found")
+
+
 def read_value_from_stdin() -> str:
     """Read one value without echoing it in an interactive terminal."""
 
@@ -254,7 +283,9 @@ __all__ = [
     "ProfileError",
     "ProfileKind",
     "add_profile",
+    "delete_profile",
     "disable_profile",
+    "enable_profile",
     "ensure_profiles",
     "load_profiles",
     "read_value_from_stdin",

@@ -1690,3 +1690,69 @@ The result does not establish filesystem durability, encryption, secure
 deletion, backup authenticity, recovery from disk failure, or protection from
 a compromised host. Missing or malformed profile state remains distinct from
 an empty profile set and cannot produce a source-level clean result.
+
+## 2026-09-16 — R9 Phase 1 approved-profile lifecycle framing
+
+### Question
+
+Can a consenting user explicitly disable, re-enable, or delete one local
+approved profile while preserving consent boundaries, opaque historical scan
+records, monotonic references, and truthful failure behavior?
+
+### Scope
+
+Added documentation-only framing for the next ordered boundary after R8:
+explicit disablement, fresh approval for re-enable, optional two-step
+deletion, preservation of history, and non-reuse of opaque references. The
+framing is based on merged R8 commit `c63c174` and branch
+`experiment/r9-profile-lifecycle`.
+
+### Boundary
+
+No lifecycle implementation, deletion command, re-enable command, fixture,
+test, dependency, real identifier, live request, credential, scheduler,
+notification, export, staging, commit, push, pull request, or merge was made.
+R1/R2 semantics and the R8 fail-closed behavior remain unchanged.
+
+### Status
+
+R9 Phase 1 framing is complete locally. Phase 2 requires explicit approval of
+the lifecycle protocol, re-enable choice, deletion choice, reference reuse
+policy, and synthetic test matrix.
+
+### Verification
+
+The documentation-only branch passed the full repository suite with 284
+tests. Ruff format/lint, mypy on 25 source files, and `git diff --check` also
+passed. No production behavior was changed.
+
+## 2026-09-16 — R9 Phase 2 approved-profile lifecycle execution
+
+### Approval and scope
+
+Peter explicitly approved the R9 lifecycle protocol: re-enable requires fresh
+approval, deletion requires prior disablement and explicit confirmation, and
+deleted subject references are never reused. The scope remains offline and
+synthetic only; no live request, real identifier, credential, dependency,
+backup, scheduler, notification, export, commit, push, or pull request was
+authorized.
+
+### Result
+
+Added `profile enable --approve` and `profile delete --confirm`. Re-enable
+restores the existing valid record without changing history. Deletion removes
+only a disabled current profile, preserves the monotonic reference counter,
+and leaves historical scan records unchanged. Interrupted deletion preserves
+the previous valid profile store through the existing atomic replacement.
+
+### Verification
+
+Focused R7/R8/R9 tests: 20 passed. Full-suite verification passed with 288
+tests. Ruff format/lint, mypy on 26 source files, and `git diff --check` also
+passed.
+
+### Boundary
+
+Lifecycle state changes do not prove current consent, identity ownership, or
+secure erasure. R1/R2 comparison, guarding, disappearance, and failure
+semantics remain unchanged.
