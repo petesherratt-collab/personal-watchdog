@@ -2395,6 +2395,14 @@ restore, secure-erasure claim, or universal durability claim.
 - No real identifier, live request, staging, commit, push, or pull request
   was made.
 
+### Verification update
+
+- Full repository suite: 284 passed.
+- Ruff format and lint: passed.
+- mypy: passed on 25 source files.
+- `git diff --check`: passed.
+- No production code changed; R9 remains uncommitted and unpushed.
+
 ## 2026-09-16 — R8 Phase 2 conservative retention and recovery execution
 
 ### Objective
@@ -2439,6 +2447,46 @@ profile target intact, and a stale temporary file cannot override it.
 - No real identifier, live request, credential, dependency, scheduler,
   notification, export, commit, push, or pull request was added.
 
+## 2026-09-16 — R9 Phase 1 approved-profile lifecycle framing
+
+### Objective
+
+Frame the next ordered research question after R8: how explicit disablement,
+re-enable, and deletion can preserve local consent boundaries and opaque scan
+history.
+
+### Changes
+
+- Added `RESEARCH_009_PROFILE_LIFECYCLE.md`.
+- Defined proposed lifecycle transitions, fresh approval for re-enable,
+  optional two-step deletion, non-reuse of opaque references, and history
+  preservation.
+- Defined failure, interruption, redaction, bound, and R1/R2 invariants for a
+  possible later offline implementation.
+
+### Verification
+
+- Confirmed clean local `main` at merged R8 commit `c63c174`.
+- Created clean local branch `experiment/r9-profile-lifecycle`.
+- Confirmed no production code, fixture, test, dependency, or network request
+  was added by R9 framing.
+- Documentation/worktree checks remain to be completed after this record.
+
+### Result
+
+R9 remains documentation-only. The conservative default is disable-only until
+re-enable and deletion are separately chosen and approved.
+
+### Gotchas
+
+- Re-enabling a retained record does not prove current consent or identity
+  ownership.
+- Removing a profile record does not prove secure erasure from every storage
+  layer or backup.
+- Historical records must remain opaque and unchanged after lifecycle actions.
+- No real identifier, live request, staging, commit, push, or pull request
+  was made.
+
 ### Verification update
 
 - Full repository suite: 276 passed.
@@ -2446,3 +2494,46 @@ profile target intact, and a stale temporary file cannot override it.
 - mypy: passed on 24 source files.
 - `git diff --check`: passed.
 - No production code changed; R8 remains uncommitted and unpushed.
+
+## 2026-09-16 — R9 Phase 2 approved-profile lifecycle execution
+
+### Objective
+
+Implement the explicitly approved offline lifecycle protocol over R7/R8:
+fresh approval for re-enable, disable-before-delete, explicit deletion
+confirmation, monotonic opaque references, and preserved history.
+
+### Changes
+
+- Added `enable_profile` and `delete_profile` with explicit approval and
+  disable-before-delete guards.
+- Added CLI commands `profile enable --approve` and
+  `profile delete --confirm`.
+- Preserved the existing monotonic subject-reference counter so deleted
+  references cannot be reused.
+- Added lifecycle tests for re-enable, deletion guards, history preservation,
+  reference non-reuse, and interrupted deletion writes.
+- Updated the README and R9 research record with the implemented boundary.
+
+### Verification
+
+- Focused R7/R8/R9 tests: 20 passed.
+- Ruff format and lint passed for the changed Python files.
+- mypy passed on 26 source files.
+- Full repository suite: 288 passed.
+- `git diff --check`: passed.
+
+### Result
+
+Re-enable now requires a fresh explicit approval signal. Deletion is a
+separate confirmed action available only for disabled profiles, and it does
+not rewrite scan history or claim secure erasure.
+
+### Gotchas
+
+- Profile deletion removes the current record but cannot prove secure erasure
+  from filesystem layers, backups, memory, or forensic copies.
+- Re-enable preserves the opaque reference but does not prove current consent
+  or identity ownership.
+- No real identifier, live request, credential, dependency, scheduler,
+  notification, export, commit, push, or pull request was added.

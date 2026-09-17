@@ -21,7 +21,9 @@ from personal_watchdog.profiles import (
     ProfileError,
     ProfileKind,
     add_profile,
+    delete_profile,
     disable_profile,
+    enable_profile,
     ensure_profiles,
     read_value_from_stdin,
     redacted_profiles,
@@ -643,6 +645,28 @@ def _cmd_profile_disable(state_dir: Path, subject_ref: str) -> int:
     return 0
 
 
+def _cmd_profile_enable(state_dir: Path, subject_ref: str, approve: bool) -> int:
+    _ensure_state(state_dir)
+    try:
+        enable_profile(state_dir, subject_ref, approved=approve)
+    except ProfileError as error:
+        raise WorkflowError(str(error)) from error
+    print(f"PROFILE_ENABLED subject_ref={subject_ref}")
+    return 0
+
+
+def _cmd_profile_delete(state_dir: Path, subject_ref: str, confirm: bool) -> int:
+    _ensure_state(state_dir)
+    if not confirm:
+        raise WorkflowError("profile delete requires explicit --confirm")
+    try:
+        delete_profile(state_dir, subject_ref)
+    except ProfileError as error:
+        raise WorkflowError(str(error)) from error
+    print(f"PROFILE_DELETED subject_ref={subject_ref}")
+    return 0
+
+
 def _cmd_report(state_dir: Path, json_mode: bool) -> int:
     _ensure_state(state_dir)
     history = _load_history(state_dir)
@@ -704,6 +728,18 @@ def _parser() -> argparse.ArgumentParser:
     )
     profile_disable.add_argument("--state-dir", type=Path, default=Path(".watchdog"))
     profile_disable.add_argument("--subject-ref", required=True)
+    profile_enable = profile_commands.add_parser(
+        "enable", help="re-enable one profile with fresh approval"
+    )
+    profile_enable.add_argument("--state-dir", type=Path, default=Path(".watchdog"))
+    profile_enable.add_argument("--subject-ref", required=True)
+    profile_enable.add_argument("--approve", action="store_true")
+    profile_delete = profile_commands.add_parser(
+        "delete", help="delete one disabled profile with confirmation"
+    )
+    profile_delete.add_argument("--state-dir", type=Path, default=Path(".watchdog"))
+    profile_delete.add_argument("--subject-ref", required=True)
+    profile_delete.add_argument("--confirm", action="store_true")
 
     report = commands.add_parser("report", help="render the latest local report")
     report.add_argument("--state-dir", type=Path, default=Path(".watchdog"))
@@ -741,6 +777,14 @@ def main(argv: Sequence[str] | None = None) -> int:
                 return _cmd_profile_list(args.state_dir, args.json_mode)
             if args.profile_command == "disable":
                 return _cmd_profile_disable(args.state_dir, args.subject_ref)
+            if args.profile_command == "enable":
+                return _cmd_profile_enable(
+                    args.state_dir, args.subject_ref, args.approve
+                )
+            if args.profile_command == "delete":
+                return _cmd_profile_delete(
+                    args.state_dir, args.subject_ref, args.confirm
+                )
             raise WorkflowError("unknown profile command")
         if args.command == "report":
             if not args.latest:

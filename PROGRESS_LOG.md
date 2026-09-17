@@ -1001,3 +1001,40 @@ The implemented boundary remains fail-closed missing/malformed profile state,
 preserved opaque history, interrupted-write protection, and independent
 bounds. Deletion, backup, restore, re-enable, and secure-erasure claims remain
 out of scope.
+
+## 2026-09-16 — R9 Phase 1 framed locally
+
+Added documentation-only framing for explicit approved-profile lifecycle on
+branch `experiment/r9-profile-lifecycle`, based on merged R8 commit `c63c174`.
+The framing covers disablement, fresh approval for re-enable, optional
+two-step deletion, non-reuse of opaque references, preserved history, and
+fail-closed local state.
+
+No implementation, fixture, test, dependency, real identifier, live request,
+staging, commit, push, pull request, scheduler, notification, or export was
+made. Phase 2 requires explicit approval of the lifecycle protocol and the
+re-enable/deletion choices.
+
+The framing branch passed the full 284-test suite, Ruff format/lint, mypy on
+25 source files, and `git diff --check`. No production behavior changed, and
+the framing remains uncommitted and unpushed pending review.
+
+## 2026-09-16 — R9 Phase 2 lifecycle execution in progress
+
+Peter approved the R9 lifecycle protocol. The local branch now has explicit
+fresh-approval re-enable, disable-before-delete, confirmed deletion,
+never-reused references, and preserved-history tests. Focused R7/R8/R9 tests
+pass 20 tests; full verification is pending.
+
+No real identifier, live request, dependency, backup, scheduler, notification,
+export, commit, push, or pull request was added.
+
+## 2026-09-16 — R9 Phase 2 lifecycle verified locally
+
+Focused R7/R8/R9 tests passed 20 tests and the full repository suite passed 288
+tests. Ruff format/lint, mypy on 26 source files, and `git diff --check` also
+passed. The branch remains uncommitted and unpushed for review.
+
+The implemented lifecycle remains explicit fresh-approval re-enable,
+disable-before-delete, confirmed deletion, never-reused opaque references,
+and preserved history. No secure-erasure claim is made.
