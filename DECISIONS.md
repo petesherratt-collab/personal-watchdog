@@ -164,3 +164,21 @@ checks contribute no accepted observations; and aggregate outcomes are
   persistence, or user-facing consequences.
 - **Evidence that could change it:** A separately approved experiment or an
   explicit project decision with a broader evidence boundary.
+
+## 2026-11-13 — R10 lifecycle and publication-guard choices
+
+- **Status:** accepted for R10 by Peter; reference-pattern widening and
+  repository visibility remain open
+- **Context:** R10 found the profile store could brick itself at reference
+  999, re-enable used a habitual flag, deletion wording implied more than it
+  did, and nothing enforced synthetic-only addresses in the public repository.
+- **Decision:** Treat counter 1000 as a loadable exhausted marker and refuse
+  further adds. Require `--confirm-ref` for re-enable; keep `--approve` for
+  add. Print `PROFILE_REMOVED … (not securely erased)`. Annotate removed
+  profiles in human reports only, at display time. Enforce a dependency-free
+  email guard through the test suite, allowing `example.invalid`,
+  `example.com`, `example.org`, `example.net`, and `.test`.
+- **Reasoning:** Each change fails closed or makes wording more truthful
+  without altering stored history or R1/R2 semantics.
+- **Evidence that could change it:** A need for more than 999 references, a
+  consumer of the old token, or a decision to add a hook or Actions workflow.

@@ -1756,3 +1756,32 @@ passed.
 Lifecycle state changes do not prove current consent, identity ownership, or
 secure erasure. R1/R2 comparison, guarding, disappearance, and failure
 semantics remain unchanged.
+
+## 2026-11-13 — R10 Phase 2 lifecycle refinements and publication guard
+
+### Approval and scope
+
+Peter approved R10 §5 A–G and all recommended §10 resolutions: `profile add`
+keeps `--approve`; the removal token becomes `PROFILE_REMOVED`; the guard is a
+script enforced through the test suite; reserved domains are
+`example.invalid`, `example.com`, `example.org`, `example.net`, and `.test`;
+the loader accepts an exhausted counter; the annotation is human-report only.
+Scope remained offline and synthetic.
+
+### Result
+
+Reference exhaustion is refused before writing and leaves the store loadable.
+Re-enable needs the reference typed again. Removal output states that it is
+not secure erasure. Reports of removed profiles carry a display-only note.
+The publication guard reports file and line only.
+
+### Verification
+
+321 tests passed; Ruff format/lint, mypy on 28 source files, and
+`git diff --check` passed.
+
+### Boundary
+
+Typed confirmation is not proof of consent. Removal is not secure erasure. The
+guard covers email addresses in tracked files only. R1/R2 comparison,
+guarding, disappearance, and failure semantics are unchanged.

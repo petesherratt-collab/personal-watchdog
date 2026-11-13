@@ -2537,3 +2537,58 @@ not rewrite scan history or claim secure erasure.
   or identity ownership.
 - No real identifier, live request, credential, dependency, scheduler,
   notification, export, commit, push, or pull request was added.
+
+## 2026-11-13 — R10 Phase 2 lifecycle refinements and publication guard
+
+### Objective
+
+Implement the approved R10 refinements (§5 A–G and §13 of
+`RESEARCH_010_LIFECYCLE_REFINEMENTS_PUBLICATION_GUARD.md`) offline over
+synthetic profiles, without changing R1/R2 semantics.
+
+### Changes
+
+- `profiles.py`: refuse `add_profile` before writing once references are
+  exhausted; loader accepts counter 1000 as an exhausted marker; `enable_profile`
+  takes `confirm_ref`; added `current_subject_refs` and
+  `is_profile_subject_ref`.
+- `cli.py`: `profile enable --confirm-ref`; deletion prints
+  `PROFILE_REMOVED subject_ref=… (not securely erased)`; human `report` adds a
+  display-only `PROFILE_NOTE` for removed `r7-subject-NNN` references.
+- Added `scripts/check_synthetic_identifiers.py` and
+  `tests/test_r10_lifecycle_refinements.py`; updated R9 tests for the new
+  enable flag and removal token.
+- Updated `README.md` and `PRIVACY.md`; added the R10 research record;
+  corrected the stale R2.5 and R3.5 status headers with dated notes.
+
+### Verification
+
+- Baseline before changes: `67451e0`, clean, 288 passed.
+- Full suite after changes: 321 passed.
+- Ruff format and lint: passed. mypy: passed on 28 source files.
+- `git diff --check`: passed.
+- Guard over tracked files (and the two new untracked files checked
+  separately): passed.
+
+### Result
+
+All R10 acceptance cases pass. No stop criterion was triggered.
+
+### Gotchas
+
+- Fixing exhaustion required widening the loader's accepted counter range to
+  1000; without that, the §7 case “counter at 999, store loadable afterwards”
+  cannot hold.
+- The default subject `r6-subject-01` is not a profile reference and must not
+  be annotated as removed.
+- An unreadable profile store must not suppress the note silently, or the
+  report would imply the profile is live; it prints `profile status
+  unavailable` instead.
+- The guard's own tests must not contain a non-reserved address literally;
+  the probe address is built at runtime on the unassigned `.zz` domain.
+- The guard only sees files git tracks, so new files are checked only once
+  added.
+- Work was done on `ccr-058bcad3-37cjg1` (session constraint), not
+  `experiment/r10-lifecycle-refinements`.
+- No real identifier, live request, credential, dependency, scheduler,
+  notification, export, hook, or CI workflow was added.

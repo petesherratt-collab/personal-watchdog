@@ -1,6 +1,12 @@
 # Research Experiment R3.5 — Visible synthetic XposedOrNot scenarios
 
-**Status: framed, not implemented or run.** This document proposes a
+**Status: Phase 2 implemented, executed, and merged** (corrected 13 Nov 2026
+under R10; see the 2026-09-09 and 2026-09-10 R3.5 Phase 2 entries in
+`BUILD_HISTORY.md` and `RESEARCH_LOG.md`). The original framing header read
+“framed, not implemented or run.” The text below is the Phase 1 framing as
+written and is not rewritten.
+
+**Original Phase 1 status: framed, not implemented or run.** This document proposes a
 documentation-only Phase 2 experiment. It does not add scenario files, change
 the runner, change the R3 adapter, change R1/R2/R2.5, or authorize a live
 request.

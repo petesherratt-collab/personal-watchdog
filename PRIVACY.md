@@ -20,6 +20,14 @@ application does not collect passwords.
 - Raw adapter payload retention is off by default and, if later approved, must
   be bounded, local, and documented.
 - No telemetry or remote analytics are planned for version 0.1.
+- Removing a profile (`profile delete`) removes its record from the local
+  profile store only. It does not securely erase data from disk, filesystem
+  journals, backups, or other copies, and it leaves historical scan records,
+  which hold only the opaque reference, unchanged.
+- The repository is public. `scripts/check_synthetic_identifiers.py` rejects
+  tracked email addresses outside reserved domains; it does not detect other
+  kinds of identifier, and passing it does not make the repository safe for
+  real data.
 
 ## Interpreting results
 

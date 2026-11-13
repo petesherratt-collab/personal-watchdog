@@ -21,10 +21,12 @@ from personal_watchdog.profiles import (
     ProfileError,
     ProfileKind,
     add_profile,
+    current_subject_refs,
     delete_profile,
     disable_profile,
     enable_profile,
     ensure_profiles,
+    is_profile_subject_ref,
     read_value_from_stdin,
     redacted_profiles,
     selected_profile,
@@ -645,10 +647,12 @@ def _cmd_profile_disable(state_dir: Path, subject_ref: str) -> int:
     return 0
 
 
-def _cmd_profile_enable(state_dir: Path, subject_ref: str, approve: bool) -> int:
+def _cmd_profile_enable(
+    state_dir: Path, subject_ref: str, confirm_ref: str | None
+) -> int:
     _ensure_state(state_dir)
     try:
-        enable_profile(state_dir, subject_ref, approved=approve)
+        enable_profile(state_dir, subject_ref, confirm_ref=confirm_ref)
     except ProfileError as error:
         raise WorkflowError(str(error)) from error
     print(f"PROFILE_ENABLED subject_ref={subject_ref}")
@@ -663,7 +667,7 @@ def _cmd_profile_delete(state_dir: Path, subject_ref: str, confirm: bool) -> int
         delete_profile(state_dir, subject_ref)
     except ProfileError as error:
         raise WorkflowError(str(error)) from error
-    print(f"PROFILE_DELETED subject_ref={subject_ref}")
+    print(f"PROFILE_REMOVED subject_ref={subject_ref} (not securely erased)")
     return 0
 
 
@@ -678,7 +682,31 @@ def _cmd_report(state_dir: Path, json_mode: bool) -> int:
         print(_canonical_json(record))
     else:
         print(_human_report(record), end="")
+        note = _profile_note(state_dir, record)
+        if note is not None:
+            print(note)
     return 0
+
+
+def _profile_note(state_dir: Path, record: Mapping[str, object]) -> str | None:
+    """Derive a display-only note about the scanned profile from current state.
+
+    The stored record is never changed, and the profile value is never read
+    into the output. Only approved-profile references are annotated; the
+    default fixture subject has no profile record.
+    """
+
+    scan = cast(dict[str, Any], record["scan"])
+    subject_ref = cast(str, scan["plan"]["subject_ref"])
+    if not is_profile_subject_ref(subject_ref):
+        return None
+    try:
+        current = current_subject_refs(state_dir)
+    except ProfileError:
+        return f"PROFILE_NOTE subject_ref={subject_ref} profile status unavailable"
+    if subject_ref in current:
+        return None
+    return f"PROFILE_NOTE subject_ref={subject_ref} profile since removed"
 
 
 def _cmd_history(state_dir: Path, json_mode: bool) -> int:
@@ -733,9 +761,14 @@ def _parser() -> argparse.ArgumentParser:
     )
     profile_enable.add_argument("--state-dir", type=Path, default=Path(".watchdog"))
     profile_enable.add_argument("--subject-ref", required=True)
-    profile_enable.add_argument("--approve", action="store_true")
+    profile_enable.add_argument(
+        "--confirm-ref",
+        dest="confirm_ref",
+        help="type the subject reference again to confirm re-enable",
+    )
     profile_delete = profile_commands.add_parser(
-        "delete", help="delete one disabled profile with confirmation"
+        "delete",
+        help="remove one disabled profile from the local store (not secure erasure)",
     )
     profile_delete.add_argument("--state-dir", type=Path, default=Path(".watchdog"))
     profile_delete.add_argument("--subject-ref", required=True)
@@ -779,7 +812,7 @@ def main(argv: Sequence[str] | None = None) -> int:
                 return _cmd_profile_disable(args.state_dir, args.subject_ref)
             if args.profile_command == "enable":
                 return _cmd_profile_enable(
-                    args.state_dir, args.subject_ref, args.approve
+                    args.state_dir, args.subject_ref, args.confirm_ref
                 )
             if args.profile_command == "delete":
                 return _cmd_profile_delete(

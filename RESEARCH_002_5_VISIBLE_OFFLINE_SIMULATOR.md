@@ -1,6 +1,12 @@
 # Research Experiment R2.5 — Visible offline simulator
 
-**Status: framed, not implemented or run.** This document is a provisional
+**Status: Phase 2 implemented, executed, and merged** (corrected 13 Nov 2026
+under R10; see the 2026-09-08 R2.5 implementation entries in `BUILD_HISTORY.md`
+and `RESEARCH_LOG.md`). The original framing header read “framed, not
+implemented or run.” The text below is the Phase 1 framing as written and is
+not rewritten.
+
+**Original Phase 1 status: framed, not implemented or run.** This document is a provisional
 research design. It does not add a simulator, scenario fixtures, a CLI, a
 policy decision, persistence, or a live adapter.
 

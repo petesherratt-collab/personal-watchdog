@@ -1038,3 +1038,11 @@ passed. The branch remains uncommitted and unpushed for review.
 The implemented lifecycle remains explicit fresh-approval re-enable,
 disable-before-delete, confirmed deletion, never-reused opaque references,
 and preserved history. No secure-erasure claim is made.
+
+## 2026-11-13 — R10 Phase 2 lifecycle refinements verified
+
+Peter approved R10 and its recommended open decisions. Implemented the
+exhaustion guard, `--confirm-ref` re-enable, truthful removal wording,
+display-only removed-profile note, publication guard script, and stale R2.5/
+R3.5 header corrections on `ccr-058bcad3-37cjg1`. 321 tests, Ruff, mypy, and
+`git diff --check` pass. Not committed or pushed pending review.

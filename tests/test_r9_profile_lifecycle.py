@@ -62,7 +62,7 @@ def test_reenable_requires_fresh_approval_and_preserves_history(
     assert (
         _invoke(state_dir, "profile", "enable", "--subject-ref", "r7-subject-001") == 2
     )
-    assert "requires explicit --approve" in capsys.readouterr().err
+    assert "requires --confirm-ref matching --subject-ref" in capsys.readouterr().err
 
     assert (
         _invoke(
@@ -71,7 +71,8 @@ def test_reenable_requires_fresh_approval_and_preserves_history(
             "enable",
             "--subject-ref",
             "r7-subject-001",
-            "--approve",
+            "--confirm-ref",
+            "r7-subject-001",
         )
         == 0
     )
@@ -138,7 +139,9 @@ def test_delete_requires_disabled_profile_and_confirmation(
         )
         == 0
     )
-    assert capsys.readouterr().out == "PROFILE_DELETED subject_ref=r7-subject-001\n"
+    assert capsys.readouterr().out == (
+        "PROFILE_REMOVED subject_ref=r7-subject-001 (not securely erased)\n"
+    )
     assert (state_dir / "history.json").read_bytes() == history_before
     assert value not in (state_dir / profiles.PROFILE_FILE).read_text(encoding="utf-8")
     assert _invoke(state_dir, "profile", "list", "--json") == 0

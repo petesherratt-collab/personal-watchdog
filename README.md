@@ -11,8 +11,8 @@ must not be interpreted as proof that an identity is safe.
 
 ## Current status
 
-The R9 offline workflow is implemented as a local module over the R6–R8
-workflow. It supports bounded local profiles for explicitly approved
+The R10 offline workflow is implemented as a local module over the R6–R8
+workflow with R10 lifecycle refinements. It supports bounded local profiles for explicitly approved
 synthetic email or username values, opaque subject references, explicit
 disable/enable/delete lifecycle actions, one fixture source, deterministic R1
 comparison, local reports, and local history. It does not perform live source
@@ -36,15 +36,32 @@ python -m personal_watchdog.cli profile add --kind username --purpose offline-te
 python -m personal_watchdog.cli profile list --json
 python -m personal_watchdog.cli scan --adapter fixture --fixture baseline --subject-ref r7-subject-001
 python -m personal_watchdog.cli profile disable --subject-ref r7-subject-001
-python -m personal_watchdog.cli profile enable --subject-ref r7-subject-001 --approve
+python -m personal_watchdog.cli profile enable --subject-ref r7-subject-001 --confirm-ref r7-subject-001
 python -m personal_watchdog.cli profile disable --subject-ref r7-subject-001
 python -m personal_watchdog.cli profile delete --subject-ref r7-subject-001 --confirm
 ```
 
 Only synthetic values are in scope for this phase. Profile listing and scan
 history show opaque references and bounded metadata, not the sensitive value.
-Deletion requires prior disablement and explicit confirmation; it does not
-rewrite historical scan records or claim secure erasure.
+Re-enabling requires typing the reference again with `--confirm-ref`; this is
+an intent signal, not proof of consent or ownership. Deletion requires prior
+disablement and explicit confirmation. It removes the record from the local
+profile store and prints `PROFILE_REMOVED ... (not securely erased)`: it does
+not securely erase data from disk, journals, or backups, and it does not
+rewrite historical scan records. A human-readable report of a scan whose
+profile has since been removed adds a display-only
+`PROFILE_NOTE ... profile since removed` line; the stored record and JSON
+output are unchanged. Opaque references run from `r7-subject-001` to
+`r7-subject-999` and are never reused; once they are exhausted, adding a
+profile is refused and the existing store stays usable.
+
+Before committing, check that tracked files contain only synthetic email
+addresses (reserved domains such as `example.invalid`). The check reports file
+and line only, never the address, and also runs as part of the test suite:
+
+```text
+python scripts/check_synthetic_identifiers.py
+```
 
 The default local state directory is `.watchdog/`; use `--state-dir PATH` to
 choose another location. Available offline fixtures are `baseline`,
