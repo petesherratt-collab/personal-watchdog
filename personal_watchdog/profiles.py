@@ -11,12 +11,16 @@ from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any, Literal, cast
 
-PROFILE_VERSION = "r7-approved-identifiers/1"
+PROFILE_VERSION = "approved-identifiers/2"
 PROFILE_FILE = "profiles.json"
 MAX_PROFILES = 8
+MAX_SUBJECT_NUMBER = 999
+# The counter value after the last valid reference has been issued. A store
+# holding it is still loadable; it simply cannot issue another reference.
+EXHAUSTED_SUBJECT_NUMBER = MAX_SUBJECT_NUMBER + 1
 MAX_VALUE_LENGTH = 128
 MAX_PURPOSE_LENGTH = 64
-SUBJECT_REF_PATTERN = re.compile(r"^r7-subject-[0-9]{3}$", re.ASCII)
+SUBJECT_REF_PATTERN = re.compile(r"^profile-[0-9]{3}$", re.ASCII)
 EMAIL_PATTERN = re.compile(r"^[^@\s]+@[^@\s]+$", re.ASCII)
 USERNAME_PATTERN = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._-]{0,127}$", re.ASCII)
 ProfileKind = Literal["email", "username"]
@@ -158,7 +162,7 @@ def load_profiles(state_dir: Path) -> dict[str, Any]:
     if len(set(refs)) != len(refs):
         raise ProfileError("local profile references are not unique")
     next_number = value.get("next_subject_number")
-    if type(next_number) is not int or not 1 <= next_number <= 999:
+    if type(next_number) is not int or not 1 <= next_number <= EXHAUSTED_SUBJECT_NUMBER:
         raise ProfileError("local profile sequence is invalid")
     value["profiles"] = validated
     return value
@@ -182,7 +186,9 @@ def add_profile(
     ):
         raise ProfileError("local profile already exists")
     number = cast(int, profiles["next_subject_number"])
-    subject_ref = f"r7-subject-{number:03d}"
+    if number > MAX_SUBJECT_NUMBER:
+        raise ProfileError("local profile references are exhausted")
+    subject_ref = f"profile-{number:03d}"
     profile: dict[str, str | bool] = {
         "subject_ref": subject_ref,
         "kind": kind,
@@ -213,6 +219,19 @@ def redacted_profiles(state_dir: Path) -> list[dict[str, object]]:
     ]
 
 
+def current_subject_refs(state_dir: Path) -> frozenset[str]:
+    """Return the opaque references of profiles currently in the store."""
+
+    profiles = load_profiles(state_dir)
+    return frozenset(
+        cast(str, profile["subject_ref"]) for profile in profiles["profiles"]
+    )
+
+
+def is_profile_subject_ref(subject_ref: str) -> bool:
+    return SUBJECT_REF_PATTERN.fullmatch(subject_ref) is not None
+
+
 def selected_profile(state_dir: Path, subject_ref: str) -> dict[str, Any]:
     profiles = load_profiles(state_dir)
     for profile in profiles["profiles"]:
@@ -235,9 +254,15 @@ def disable_profile(state_dir: Path, subject_ref: str) -> None:
     raise ProfileError("profile reference was not found")
 
 
-def enable_profile(state_dir: Path, subject_ref: str, *, approved: bool) -> None:
-    if not approved:
-        raise ProfileError("profile enable requires explicit --approve")
+def enable_profile(
+    state_dir: Path, subject_ref: str, *, confirm_ref: str | None
+) -> None:
+    """Re-enable one profile after the reference is typed again as confirmation."""
+
+    if confirm_ref is None or confirm_ref != subject_ref:
+        raise ProfileError(
+            "profile enable requires --confirm-ref matching --subject-ref"
+        )
     profiles = load_profiles(state_dir)
     for profile in profiles["profiles"]:
         if profile["subject_ref"] == subject_ref:
@@ -249,6 +274,8 @@ def enable_profile(state_dir: Path, subject_ref: str, *, approved: bool) -> None
 
 
 def delete_profile(state_dir: Path, subject_ref: str) -> None:
+    """Remove one disabled record from the local store; this is not secure erasure."""
+
     profiles = load_profiles(state_dir)
     for profile in profiles["profiles"]:
         if profile["subject_ref"] == subject_ref:
@@ -283,10 +310,12 @@ __all__ = [
     "ProfileError",
     "ProfileKind",
     "add_profile",
+    "current_subject_refs",
     "delete_profile",
     "disable_profile",
     "enable_profile",
     "ensure_profiles",
+    "is_profile_subject_ref",
     "load_profiles",
     "read_value_from_stdin",
     "redacted_profiles",

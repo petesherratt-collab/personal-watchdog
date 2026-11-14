@@ -44,7 +44,7 @@ def _add_email(
         == 0
     )
     output = capsys.readouterr().out
-    assert "PROFILE_ADDED subject_ref=r7-subject-001" in output
+    assert "PROFILE_ADDED subject_ref=profile-001" in output
     assert value not in output
     return value
 
@@ -73,7 +73,7 @@ def test_profile_add_list_and_reload_are_redacted_and_private(
                 "enabled": True,
                 "kind": "email",
                 "purpose": "offline-test",
-                "subject_ref": "r7-subject-001",
+                "subject_ref": "profile-001",
             }
         ]
     }
@@ -103,7 +103,7 @@ def test_synthetic_username_profile_can_be_added(
         == 0
     )
     output = capsys.readouterr().out
-    assert "PROFILE_ADDED subject_ref=r7-subject-001 kind=username" in output
+    assert "PROFILE_ADDED subject_ref=profile-001 kind=username" in output
     assert value not in output
 
 
@@ -125,12 +125,12 @@ def test_profile_scan_uses_opaque_subject_ref_and_preserves_r6_state_shape(
             "--fixture",
             "baseline",
             "--subject-ref",
-            "r7-subject-001",
+            "profile-001",
         )
         == 0
     )
     baseline_output = capsys.readouterr().out
-    assert "subject_ref=r7-subject-001" in baseline_output
+    assert "subject_ref=profile-001" in baseline_output
     assert value not in baseline_output
 
     assert (
@@ -142,7 +142,7 @@ def test_profile_scan_uses_opaque_subject_ref_and_preserves_r6_state_shape(
             "--fixture",
             "changed",
             "--subject-ref",
-            "r7-subject-001",
+            "profile-001",
         )
         == 0
     )
@@ -151,7 +151,7 @@ def test_profile_scan_uses_opaque_subject_ref_and_preserves_r6_state_shape(
     assert value not in changed_output
 
     config = json.loads((state_dir / "config.json").read_text(encoding="utf-8"))
-    assert config["subject_ref"] == "r6-subject-01"
+    assert config["subject_ref"] == "fixture-subject-01"
     history_text = (state_dir / "history.json").read_text(encoding="utf-8")
     assert value not in history_text
     assert "contract_version" not in history_text
@@ -227,10 +227,8 @@ def test_disabled_profile_cannot_scan_and_does_not_rewrite_history(
     state_dir = tmp_path / "state"
     _init(state_dir, capsys)
     _add_email(state_dir, capsys, monkeypatch)
-    assert (
-        _invoke(state_dir, "profile", "disable", "--subject-ref", "r7-subject-001") == 0
-    )
-    assert capsys.readouterr().out == "PROFILE_DISABLED subject_ref=r7-subject-001\n"
+    assert _invoke(state_dir, "profile", "disable", "--subject-ref", "profile-001") == 0
+    assert capsys.readouterr().out == "PROFILE_DISABLED subject_ref=profile-001\n"
 
     before = (state_dir / "history.json").read_bytes()
     assert (
@@ -242,7 +240,7 @@ def test_disabled_profile_cannot_scan_and_does_not_rewrite_history(
             "--fixture",
             "baseline",
             "--subject-ref",
-            "r7-subject-001",
+            "profile-001",
         )
         == 2
     )

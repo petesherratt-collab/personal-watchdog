@@ -8,7 +8,7 @@ from typing import cast
 
 import pytest
 
-from personal_watchdog.r1 import (
+from personal_watchdog.comparison import (
     AggregateOutcome,
     ComparisonKind,
     DiagnosticMetadata,
@@ -21,7 +21,7 @@ from personal_watchdog.r1 import (
     SourceStatus,
     compare_scans,
 )
-from personal_watchdog.r2_adapter import (
+from personal_watchdog.response_normalizer import (
     MAX_ARRAY_ITEMS,
     MAX_DIAGNOSTIC_DURATION_MS,
     MAX_DIAGNOSTIC_TEXT,

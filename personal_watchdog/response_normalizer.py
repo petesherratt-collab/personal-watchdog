@@ -11,7 +11,7 @@ import unicodedata
 from dataclasses import dataclass, field
 from typing import Any
 
-from personal_watchdog.r1 import (
+from personal_watchdog.comparison import (
     DiagnosticMetadata,
     InvalidObservationError,
     Observation,

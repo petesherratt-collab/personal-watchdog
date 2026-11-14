@@ -16,20 +16,7 @@ from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any, Literal, cast
 
-from personal_watchdog.profiles import (
-    PROFILE_KINDS,
-    ProfileError,
-    ProfileKind,
-    add_profile,
-    delete_profile,
-    disable_profile,
-    enable_profile,
-    ensure_profiles,
-    read_value_from_stdin,
-    redacted_profiles,
-    selected_profile,
-)
-from personal_watchdog.r1 import (
+from personal_watchdog.comparison import (
     ComparisonReport,
     ComparisonResult,
     DiagnosticMetadata,
@@ -45,12 +32,43 @@ from personal_watchdog.r1 import (
     SourceStatus,
     compare_scans,
 )
-from personal_watchdog.r2_adapter import TrustedContext, normalize_response
+from personal_watchdog.profiles import (
+    PROFILE_KINDS,
+    ProfileError,
+    ProfileKind,
+    add_profile,
+    current_subject_refs,
+    delete_profile,
+    disable_profile,
+    enable_profile,
+    ensure_profiles,
+    is_profile_subject_ref,
+    read_value_from_stdin,
+    redacted_profiles,
+    selected_profile,
+)
+from personal_watchdog.response_normalizer import TrustedContext, normalize_response
+from personal_watchdog.xon_live import (
+    LIVE_HOST,
+    LiveCaptureError,
+    _Opener,
+    capture_check_email,
+)
+from personal_watchdog.xposedornot_check_email_adapter import (
+    XON_SOURCE,
+    classify_transport,
+    make_trusted_context,
+    normalize_check_email,
+    serialize_r2_envelope,
+)
 
-STATE_VERSION = "r6-local-workflow/1"
+STATE_VERSION = "local-workflow/2"
 MAX_RETAINED_SCANS = 32
-DEFAULT_SUBJECT_REF = "r6-subject-01"
-SUBJECT_REF_PATTERN = re.compile(r"^r6-[a-z0-9][a-z0-9-]{0,62}$", re.ASCII)
+FIXTURE_ADAPTER = "fixture"
+LIVE_ADAPTER = "xposedornot"
+ADAPTER_NAMES = (FIXTURE_ADAPTER, LIVE_ADAPTER)
+DEFAULT_SUBJECT_REF = "fixture-subject-01"
+SUBJECT_REF_PATTERN = re.compile(r"^fixture-[a-z0-9][a-z0-9-]{0,62}$", re.ASCII)
 FixtureName = Literal[
     "baseline",
     "unchanged",
@@ -480,13 +498,93 @@ def _make_scan(
 
 
 def _record(
-    scan: ScanAttempt, report: ComparisonReport, fixture: FixtureName
+    scan: ScanAttempt, report: ComparisonReport, fixture: FixtureName | None
 ) -> dict[str, object]:
-    return {
+    record: dict[str, object] = {
         "fixture": fixture,
         "scan": _scan_to_dict(scan),
         "comparison": _comparison_to_dict(report),
     }
+    if fixture is None:
+        record["adapter"] = LIVE_ADAPTER
+    return record
+
+
+def _origin(record: Mapping[str, object]) -> str:
+    """Describe where a stored scan came from: a named fixture or a live adapter."""
+
+    if record.get("fixture") is None:
+        return f"adapter={record.get('adapter', 'unknown')}"
+    return f"fixture={record['fixture']}"
+
+
+def _baseline_for(
+    records: Sequence[Mapping[str, Any]], scan: ScanAttempt
+) -> ScanAttempt | None:
+    """Pick the baseline for one subject and source from retained history.
+
+    Scans of other subjects or other sources are never a baseline. The most
+    recent completed check is preferred, so a failed or unverifiable scan in
+    between does not erase the comparison point; without one, the most recent
+    earlier attempt is used and the comparison model treats it as no baseline.
+    """
+
+    source_id = scan.source_checks[0].source.source_id
+    fallback: ScanAttempt | None = None
+    for record in reversed(records):
+        stored = cast(dict[str, Any], record["scan"])
+        if stored["plan"]["subject_ref"] != scan.plan.subject_ref:
+            continue
+        checks = cast(list[dict[str, Any]], stored["source_checks"])
+        match = [item for item in checks if item["source"]["source_id"] == source_id]
+        if not match:
+            continue
+        if match[0]["status"] == SourceStatus.COMPLETED.value:
+            return _scan_from_dict(stored)
+        if fallback is None:
+            fallback = _scan_from_dict(stored)
+    return fallback
+
+
+def _make_live_scan(
+    *,
+    scan_id: str,
+    subject_ref: str,
+    email: str,
+    opener: _Opener | None,
+) -> tuple[ScanAttempt, str]:
+    """Run one live check; every failure becomes a recorded non-clean check.
+
+    Also returns a display-only transport line holding the HTTP status and
+    classification. It never contains the address, URL, headers, or body.
+    """
+
+    context = make_trusted_context(
+        scan_id=scan_id,
+        source_check_id=f"{scan_id}:{XON_SOURCE.source_id}",
+        subject_ref=subject_ref,
+        diagnostics=DiagnosticMetadata(_now()),
+    )
+    try:
+        attempt = capture_check_email(email=email, context=context, opener=opener)
+        check = normalize_check_email(attempt)
+        transport = classify_transport(attempt)
+        status = "none" if attempt.http_status is None else str(attempt.http_status)
+        line = (
+            f"TRANSPORT http_status={status} "
+            f"disposition={transport.disposition.value} reason={transport.reason}"
+        )
+    except LiveCaptureError:
+        check = normalize_response(
+            serialize_r2_envelope(outcome="unverifiable"), context
+        )
+        line = (
+            "TRANSPORT http_status=unknown disposition=unverifiable "
+            "reason=unreadable_response_metadata"
+        )
+    plan = ScanPlan.create(subject_ref=subject_ref, sources=(XON_SOURCE,))
+    scan = ScanAttempt.create(scan_id=scan_id, plan=plan, source_checks=(check,))
+    return scan, line
 
 
 def _load_records(history: dict[str, Any]) -> list[dict[str, Any]]:
@@ -500,7 +598,7 @@ def _human_report(record: Mapping[str, object]) -> str:
     finding_keys = [item["finding_key"] for item in check["observations"]]
     lines = [
         f"SCAN scan_id={scan['scan_id']} subject_ref={scan['plan']['subject_ref']} "
-        f"outcome={scan['outcome']} fixture={record['fixture']}",
+        f"outcome={scan['outcome']} {_origin(record)}",
         f"SOURCE source_id={check['source']['source_id']} status={check['status']} "
         f"reason_codes={_canonical_json(check['reason_codes'])} "
         f"finding_keys={_canonical_json(finding_keys)}",
@@ -547,16 +645,33 @@ def _cmd_init(state_dir: Path) -> int:
 def _cmd_scan(
     state_dir: Path,
     adapter: str,
-    fixture: FixtureName,
+    fixture: FixtureName | None,
     subject_ref: str | None,
+    confirm_live: str | None = None,
+    opener: _Opener | None = None,
 ) -> int:
-    if adapter != "fixture":
-        raise WorkflowError("only the offline fixture adapter is available")
+    if adapter not in ADAPTER_NAMES:
+        raise WorkflowError("unknown adapter")
+    live = adapter == LIVE_ADAPTER
+    if live:
+        if fixture is not None:
+            raise WorkflowError("--fixture cannot be used with a live adapter")
+        if subject_ref is None:
+            raise WorkflowError("a live scan requires --subject-ref")
+        if confirm_live is None or confirm_live != subject_ref:
+            raise WorkflowError(
+                "a live scan sends the profile's email address to "
+                f"{LIVE_HOST}; confirm with --confirm-live matching --subject-ref"
+            )
+    elif confirm_live is not None:
+        raise WorkflowError("--confirm-live applies only to a live adapter")
     _ensure_state(state_dir)
     config, source = _load_config(state_dir)
     history = _load_history(state_dir)
     records = _load_records(history)
     selected_ref = cast(str, config["subject_ref"])
+    selected: dict[str, Any] | None = None
+    transport_line = ""
     if subject_ref is not None:
         try:
             selected = selected_profile(state_dir, subject_ref)
@@ -564,15 +679,30 @@ def _cmd_scan(
             raise WorkflowError(str(error)) from error
         selected_ref = cast(str, selected["subject_ref"])
     number = cast(int, history.get("next_scan_number"))
-    scan = _make_scan(
-        scan_id=f"r6-scan-{number:03d}",
-        subject_ref=selected_ref,
-        source=source,
-        fixture=fixture,
-    )
-    baseline = _scan_from_dict(records[-1]["scan"]) if records else None
-    report = compare_scans(baseline, scan)
-    records.append(_record(scan, report, fixture))
+    scan_id = f"scan-{number:03d}"
+    if live:
+        assert selected is not None
+        if selected["kind"] != "email":
+            raise WorkflowError("a live scan requires an email profile")
+        print(
+            f"LIVE_REQUEST destination={LIVE_HOST} source_id={XON_SOURCE.source_id} "
+            f"subject_ref={selected_ref} sends=email-address requests=1"
+        )
+        scan, transport_line = _make_live_scan(
+            scan_id=scan_id,
+            subject_ref=selected_ref,
+            email=cast(str, selected["value"]),
+            opener=opener,
+        )
+    else:
+        scan = _make_scan(
+            scan_id=scan_id,
+            subject_ref=selected_ref,
+            source=source,
+            fixture=fixture or "baseline",
+        )
+    report = compare_scans(_baseline_for(records, scan), scan)
+    records.append(_record(scan, report, None if live else fixture or "baseline"))
     retained = records[-MAX_RETAINED_SCANS:]
     _atomic_write_json(
         _state_path(state_dir, "history.json"),
@@ -582,7 +712,14 @@ def _cmd_scan(
             "scans": retained,
         },
     )
+    if live:
+        print(transport_line)
     print(_human_report(retained[-1]), end="")
+    if live and scan.source_checks[0].status is not SourceStatus.COMPLETED:
+        print(
+            "NOTE this check did not complete; it is not a clean result and "
+            "says nothing about exposure"
+        )
     return 0
 
 
@@ -645,10 +782,12 @@ def _cmd_profile_disable(state_dir: Path, subject_ref: str) -> int:
     return 0
 
 
-def _cmd_profile_enable(state_dir: Path, subject_ref: str, approve: bool) -> int:
+def _cmd_profile_enable(
+    state_dir: Path, subject_ref: str, confirm_ref: str | None
+) -> int:
     _ensure_state(state_dir)
     try:
-        enable_profile(state_dir, subject_ref, approved=approve)
+        enable_profile(state_dir, subject_ref, confirm_ref=confirm_ref)
     except ProfileError as error:
         raise WorkflowError(str(error)) from error
     print(f"PROFILE_ENABLED subject_ref={subject_ref}")
@@ -663,7 +802,7 @@ def _cmd_profile_delete(state_dir: Path, subject_ref: str, confirm: bool) -> int
         delete_profile(state_dir, subject_ref)
     except ProfileError as error:
         raise WorkflowError(str(error)) from error
-    print(f"PROFILE_DELETED subject_ref={subject_ref}")
+    print(f"PROFILE_REMOVED subject_ref={subject_ref} (not securely erased)")
     return 0
 
 
@@ -678,7 +817,31 @@ def _cmd_report(state_dir: Path, json_mode: bool) -> int:
         print(_canonical_json(record))
     else:
         print(_human_report(record), end="")
+        note = _profile_note(state_dir, record)
+        if note is not None:
+            print(note)
     return 0
+
+
+def _profile_note(state_dir: Path, record: Mapping[str, object]) -> str | None:
+    """Derive a display-only note about the scanned profile from current state.
+
+    The stored record is never changed, and the profile value is never read
+    into the output. Only approved-profile references are annotated; the
+    default fixture subject has no profile record.
+    """
+
+    scan = cast(dict[str, Any], record["scan"])
+    subject_ref = cast(str, scan["plan"]["subject_ref"])
+    if not is_profile_subject_ref(subject_ref):
+        return None
+    try:
+        current = current_subject_refs(state_dir)
+    except ProfileError:
+        return f"PROFILE_NOTE subject_ref={subject_ref} profile status unavailable"
+    if subject_ref in current:
+        return None
+    return f"PROFILE_NOTE subject_ref={subject_ref} profile since removed"
 
 
 def _cmd_history(state_dir: Path, json_mode: bool) -> int:
@@ -692,7 +855,7 @@ def _cmd_history(state_dir: Path, json_mode: bool) -> int:
             scan = cast(dict[str, Any], record["scan"])
             check = cast(dict[str, Any], cast(list[object], scan["source_checks"])[0])
             print(
-                f"SCAN scan_id={scan['scan_id']} fixture={record['fixture']} "
+                f"SCAN scan_id={scan['scan_id']} {_origin(record)} "
                 f"status={check['status']} outcome={scan['outcome']}"
             )
         print(f"HISTORY scans={len(records)} retained_max={MAX_RETAINED_SCANS}")
@@ -706,11 +869,21 @@ def _parser() -> argparse.ArgumentParser:
     init = commands.add_parser("init", help="create local synthetic workflow state")
     init.add_argument("--state-dir", type=Path, default=Path(".watchdog"))
 
-    scan = commands.add_parser("scan", help="run one offline fixture scan")
+    scan = commands.add_parser(
+        "scan", help="run one offline fixture scan or one confirmed live check"
+    )
     scan.add_argument("--state-dir", type=Path, default=Path(".watchdog"))
-    scan.add_argument("--adapter", choices=("fixture",), required=True)
-    scan.add_argument("--fixture", choices=FIXTURE_NAMES, default="baseline")
+    scan.add_argument("--adapter", choices=ADAPTER_NAMES, required=True)
+    scan.add_argument("--fixture", choices=FIXTURE_NAMES)
     scan.add_argument("--subject-ref")
+    scan.add_argument(
+        "--confirm-live",
+        dest="confirm_live",
+        help=(
+            "type the subject reference again to send that profile's email "
+            f"address in one request to {LIVE_HOST}"
+        ),
+    )
 
     profile = commands.add_parser("profile", help="manage local approved profiles")
     profile_commands = profile.add_subparsers(dest="profile_command", required=True)
@@ -733,9 +906,14 @@ def _parser() -> argparse.ArgumentParser:
     )
     profile_enable.add_argument("--state-dir", type=Path, default=Path(".watchdog"))
     profile_enable.add_argument("--subject-ref", required=True)
-    profile_enable.add_argument("--approve", action="store_true")
+    profile_enable.add_argument(
+        "--confirm-ref",
+        dest="confirm_ref",
+        help="type the subject reference again to confirm re-enable",
+    )
     profile_delete = profile_commands.add_parser(
-        "delete", help="delete one disabled profile with confirmation"
+        "delete",
+        help="remove one disabled profile from the local store (not secure erasure)",
     )
     profile_delete.add_argument("--state-dir", type=Path, default=Path(".watchdog"))
     profile_delete.add_argument("--subject-ref", required=True)
@@ -752,7 +930,7 @@ def _parser() -> argparse.ArgumentParser:
     return parser
 
 
-def main(argv: Sequence[str] | None = None) -> int:
+def main(argv: Sequence[str] | None = None, *, opener: _Opener | None = None) -> int:
     args = _parser().parse_args(list(argv) if argv is not None else None)
     try:
         if args.command == "init":
@@ -761,8 +939,10 @@ def main(argv: Sequence[str] | None = None) -> int:
             return _cmd_scan(
                 args.state_dir,
                 args.adapter,
-                cast(FixtureName, args.fixture),
+                cast("FixtureName | None", args.fixture),
                 args.subject_ref,
+                args.confirm_live,
+                opener,
             )
         if args.command == "profile":
             if args.profile_command == "add":
@@ -779,7 +959,7 @@ def main(argv: Sequence[str] | None = None) -> int:
                 return _cmd_profile_disable(args.state_dir, args.subject_ref)
             if args.profile_command == "enable":
                 return _cmd_profile_enable(
-                    args.state_dir, args.subject_ref, args.approve
+                    args.state_dir, args.subject_ref, args.confirm_ref
                 )
             if args.profile_command == "delete":
                 return _cmd_profile_delete(

@@ -6,7 +6,7 @@ import json
 from pathlib import Path
 from typing import Any, cast
 
-from personal_watchdog.r1 import SourceStatus
+from personal_watchdog.comparison import SourceStatus
 from personal_watchdog.xposedornot_check_email_adapter import (
     Header,
     TransportAttempt,

@@ -5,8 +5,8 @@ from __future__ import annotations
 import json
 from collections.abc import Sequence
 
-from personal_watchdog.r1 import ScanAttempt, ScanPlan, SourceCheck
-from personal_watchdog.r2_adapter import TrustedContext
+from personal_watchdog.comparison import ScanAttempt, ScanPlan, SourceCheck
+from personal_watchdog.response_normalizer import TrustedContext
 from personal_watchdog.xposedornot_check_email_adapter import (
     Header,
     TransportAttempt,

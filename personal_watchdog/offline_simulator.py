@@ -16,7 +16,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Literal, NoReturn, cast
 
-from personal_watchdog.r1 import (
+from personal_watchdog.comparison import (
     AggregateOutcome,
     ComparisonKind,
     DiagnosticMetadata,
@@ -29,7 +29,7 @@ from personal_watchdog.r1 import (
     SourceStatus,
     compare_scans,
 )
-from personal_watchdog.r2_adapter import TrustedContext, normalize_response
+from personal_watchdog.response_normalizer import TrustedContext, normalize_response
 from personal_watchdog.xposedornot_check_email_adapter import (
     MAX_XON_BODY_BYTES,
     MAX_XON_HEADER_COUNT,

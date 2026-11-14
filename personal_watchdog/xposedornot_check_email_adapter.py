@@ -15,8 +15,8 @@ from dataclasses import dataclass, field
 from enum import StrEnum
 from typing import Any, Literal
 
-from personal_watchdog.r1 import DiagnosticMetadata, SourceCheck, SourceIdentity
-from personal_watchdog.r2_adapter import (
+from personal_watchdog.comparison import DiagnosticMetadata, SourceCheck, SourceIdentity
+from personal_watchdog.response_normalizer import (
     MAX_INPUT_BYTES,
     TrustedContext,
     normalize_response,
@@ -112,9 +112,16 @@ class TransportAttempt:
     timed_out: bool = False
     failure_phase: FailurePhase | None = None
     trusted_context: TrustedContext = field(kw_only=True)
+    # The address sent in the request, held in memory only so the response can
+    # be matched against it. When omitted, the trusted subject_ref is the
+    # address (the original synthetic contract). A live scan sets it so that
+    # subject_ref can stay an opaque local reference.
+    request_email: str | None = field(default=None, kw_only=True, repr=False)
 
     def __post_init__(self) -> None:
         _validate_context(self.trusted_context)
+        if self.request_email is not None and type(self.request_email) is not str:
+            raise TransportConstructionError("request_email must be text")
         if type(self.http_status) is not int and self.http_status is not None:
             raise TransportConstructionError("http_status must be an exact integer")
         if self.http_status is not None and not 100 <= self.http_status <= 599:
@@ -358,7 +365,7 @@ def _xon_text(value: object, *, maximum: int, field_name: str) -> str:
     return value
 
 
-def _parse_xon_body(raw: bytes, trusted_context: TrustedContext) -> list[str]:
+def _parse_xon_body(raw: bytes, expected_email: str) -> list[str]:
     try:
         text = raw.decode("utf-8", errors="strict")
         decoded = json.loads(
@@ -385,7 +392,7 @@ def _parse_xon_body(raw: bytes, trusted_context: TrustedContext) -> list[str]:
     email = _xon_text(
         decoded["email"], maximum=MAX_XON_EMAIL_CODEPOINTS, field_name="email"
     )
-    if email != trusted_context.subject_ref:
+    if email != expected_email:
         raise _XONBodyError("response email does not match the local request")
     breaches = decoded["breaches"]
     if type(breaches) is not list or len(breaches) != 1:
@@ -466,7 +473,12 @@ def normalize_check_email(attempt: TransportAttempt) -> SourceCheck:
         return _normalize_r2(context, outcome="unverifiable")
 
     try:
-        names = _parse_xon_body(attempt.body_bytes, context)
+        expected_email = (
+            attempt.request_email
+            if attempt.request_email is not None
+            else context.subject_ref
+        )
+        names = _parse_xon_body(attempt.body_bytes, expected_email)
     except _XONBodyError:
         return _normalize_r2(context, outcome="unverifiable")
     results = tuple(

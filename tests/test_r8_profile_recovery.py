@@ -45,7 +45,7 @@ def test_missing_profile_store_fails_closed_without_history_rewrite(
 
 def _malformed_payloads() -> list[tuple[str, str]]:
     valid_profile = {
-        "subject_ref": "r7-subject-001",
+        "subject_ref": "profile-001",
         "kind": "username",
         "value": "r8-user-001",
         "approved": True,
@@ -138,7 +138,7 @@ def test_stale_temporary_file_does_not_override_valid_profile_store(
 
     assert _invoke(state_dir, "profile", "list", "--json") == 0
     listed = capsys.readouterr().out
-    assert "r7-subject-001" in listed
+    assert "profile-001" in listed
     assert profile_path.read_bytes() == before
     assert temporary.exists()
 

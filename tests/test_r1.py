@@ -4,7 +4,7 @@ from dataclasses import replace
 
 import pytest
 
-from personal_watchdog.r1 import (
+from personal_watchdog.comparison import (
     AggregateOutcome,
     ComparisonKind,
     GuardKind,

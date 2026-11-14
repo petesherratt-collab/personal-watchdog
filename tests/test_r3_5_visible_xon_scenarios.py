@@ -14,9 +14,11 @@ from unittest.mock import patch
 import pytest
 
 from personal_watchdog import offline_simulator as simulator
-from personal_watchdog.r1 import SourceCheck
-from personal_watchdog.r1 import compare_scans as r1_compare_scans
-from personal_watchdog.r2_adapter import normalize_response as r2_normalize_response
+from personal_watchdog.comparison import SourceCheck
+from personal_watchdog.comparison import compare_scans as r1_compare_scans
+from personal_watchdog.response_normalizer import (
+    normalize_response as r2_normalize_response,
+)
 from personal_watchdog.xposedornot_check_email_adapter import (
     TransportAttempt,
     TransportClassification,
