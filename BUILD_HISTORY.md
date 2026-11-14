@@ -2592,3 +2592,69 @@ All R10 acceptance cases pass. No stop criterion was triggered.
   `experiment/r10-lifecycle-refinements`.
 - No real identifier, live request, credential, dependency, scheduler,
   notification, export, hook, or CI workflow was added.
+
+## 2026-11-14 — Live scan path, neutral names, CI, single record, roadmap
+
+### Objective
+
+Peter approved four follow-ups to R10: wire the XposedOrNot adapter into the
+workflow end to end, add CI, cut record-keeping to one entry per step, and
+remove experiment numbers from stored formats and module names; then take
+stock in a roadmap.
+
+### Changes
+
+- Renamed modules: `r1.py` → `comparison.py`, `r2_adapter.py` →
+  `response_normalizer.py`, `r4_bounded_live_xon_probe.py` →
+  `xon_live_probe.py`.
+- Renamed stored formats: profile references `profile-NNN`, default subject
+  `fixture-subject-01`, scan ids `scan-NNN`, versions `local-workflow/2` and
+  `approved-identifiers/2`. Older state is rejected as an unsupported version;
+  there is no migration because only synthetic state existed.
+- Added `xon_live.py`, the bounded single-request transport generalized from
+  the probe, which now wraps it. It also treats `http.client.HTTPException` as
+  a transport failure.
+- `TransportAttempt` gained an in-memory `request_email`, so the response is
+  matched against the address sent while `subject_ref` stays opaque. Without
+  it the adapter behaves as before.
+- `scan --adapter xposedornot --subject-ref REF --confirm-live REF`: email
+  profiles only, one request, a `LIVE_REQUEST` and a `TRANSPORT` line, and a
+  note when the check did not complete. Unreadable response metadata is
+  recorded as unverifiable.
+- The baseline is now the last completed scan of the same profile and source,
+  not simply the previous record.
+- Added `.github/workflows/ci.yml`, `ROADMAP.md`, and
+  `tests/test_live_xon_scan.py`; updated `README.md`, `PRIVACY.md`, and
+  `AGENTS.md`; closed `PROGRESS_LOG.md` and `RESEARCH_LOG.md`; marked the
+  itinerary superseded.
+
+### Verification
+
+- 347 tests passed (321 before). Ruff format/lint, mypy on 30 source files,
+  the synthetic-identifier guard, and `git diff --check` passed.
+- One live smoke run with a synthetic `example.invalid` address from the cloud
+  session: the session's network policy refused the connection, so nothing
+  reached the service. The scan was recorded as `failed`, not clean.
+
+### Result
+
+The live path is implemented and tested against mocked transport only. It has
+not been verified against the real service.
+
+### Gotchas
+
+- The adapter compared the response address with `subject_ref`, so using it
+  unchanged would have written the address into history.
+- The no-match response is still `unverifiable` by design; a clean address
+  cannot yet produce a completed result.
+- Before this change a failed scan between two completed scans erased the
+  comparison point, and a scan of one profile could be the baseline for
+  another (reported as not comparable).
+- A failure originally gave no reason; the `TRANSPORT` line was added after
+  the smoke run.
+- Transport exception text can contain the request URL, so it is never
+  printed or stored.
+- Golden outputs of the R2.5/R3.5 simulators keep their `r1`/`r2` keys; those
+  are frozen experiment artefacts and were not renamed.
+- No real identifier was used. No dependency, scheduler, or notification was
+  added.

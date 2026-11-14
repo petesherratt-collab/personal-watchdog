@@ -11,14 +11,16 @@ must not be interpreted as proof that an identity is safe.
 
 ## Current status
 
-The R10 offline workflow is implemented as a local module over the R6–R8
-workflow with R10 lifecycle refinements. It supports bounded local profiles for explicitly approved
-synthetic email or username values, opaque subject references, explicit
-disable/enable/delete lifecycle actions, one fixture source, deterministic R1
-comparison, local reports, and local history. It does not perform live source
-checks, store raw response payloads, schedule scans, or send notifications.
+The tool runs a local workflow over bounded profiles of explicitly approved
+identifiers, shown only as opaque references such as `profile-001`. It keeps
+local history, compares each scan with the last completed scan of the same
+profile and source, and reports new, changed, and disappeared findings. A
+failed, blocked, or unverifiable check is recorded as such and is never
+reported as clean. There is one offline fixture source and one live source
+(XposedOrNot check-email). It does not schedule scans or send notifications.
+See [ROADMAP.md](ROADMAP.md) for what is verified and what comes next.
 
-Run it from the repository with:
+### Offline fixture workflow
 
 ```text
 python -m personal_watchdog.cli init
@@ -28,21 +30,22 @@ python -m personal_watchdog.cli report --latest
 python -m personal_watchdog.cli history
 ```
 
-To configure a synthetic profile, run the add command and enter the value at
-the non-echo prompt. The value is not placed in the command line:
+Available fixtures are `baseline`, `unchanged`, `changed`, `disappeared`,
+`failed`, and `unverifiable`.
+
+### Profiles
+
+Run the add command and enter the value at the non-echo prompt. The value is
+never placed on the command line:
 
 ```text
-python -m personal_watchdog.cli profile add --kind username --purpose offline-test --approve --value-stdin
+python -m personal_watchdog.cli profile add --kind email --purpose monitoring --approve --value-stdin
 python -m personal_watchdog.cli profile list --json
-python -m personal_watchdog.cli scan --adapter fixture --fixture baseline --subject-ref r7-subject-001
-python -m personal_watchdog.cli profile disable --subject-ref r7-subject-001
-python -m personal_watchdog.cli profile enable --subject-ref r7-subject-001 --confirm-ref r7-subject-001
-python -m personal_watchdog.cli profile disable --subject-ref r7-subject-001
-python -m personal_watchdog.cli profile delete --subject-ref r7-subject-001 --confirm
+python -m personal_watchdog.cli profile disable --subject-ref profile-001
+python -m personal_watchdog.cli profile enable --subject-ref profile-001 --confirm-ref profile-001
+python -m personal_watchdog.cli profile delete --subject-ref profile-001 --confirm
 ```
 
-Only synthetic values are in scope for this phase. Profile listing and scan
-history show opaque references and bounded metadata, not the sensitive value.
 Re-enabling requires typing the reference again with `--confirm-ref`; this is
 an intent signal, not proof of consent or ownership. Deletion requires prior
 disablement and explicit confirmation. It removes the record from the local
@@ -50,24 +53,45 @@ profile store and prints `PROFILE_REMOVED ... (not securely erased)`: it does
 not securely erase data from disk, journals, or backups, and it does not
 rewrite historical scan records. A human-readable report of a scan whose
 profile has since been removed adds a display-only
-`PROFILE_NOTE ... profile since removed` line; the stored record and JSON
-output are unchanged. Opaque references run from `r7-subject-001` to
-`r7-subject-999` and are never reused; once they are exhausted, adding a
-profile is refused and the existing store stays usable.
+`PROFILE_NOTE ... profile since removed` line. References run from
+`profile-001` to `profile-999` and are never reused.
+
+### Live check (XposedOrNot)
+
+Only add an address you own. A live check sends that one email address, in a
+single HTTPS request, to `api.xposedornot.com`; see [PRIVACY.md](PRIVACY.md)
+for exactly what leaves the machine. Each check needs the reference typed
+again:
+
+```text
+python -m personal_watchdog.cli scan --adapter xposedornot --subject-ref profile-001 --confirm-live profile-001
+```
+
+The output never contains the address. A `TRANSPORT` line gives the HTTP
+status and classification so a failure can be understood. Known limits:
+
+- The service's "no breach found" response is not yet accepted as a completed
+  result, so an address with no known breaches currently reports
+  `unverifiable`, not clean. This is deliberate until that response is
+  understood well enough to rule out a false clean.
+- Enter the address exactly as the service returns it (normally lower case);
+  a response for a differently spelled address is rejected as unverifiable.
+- One request per run, with no retry. Wait before repeating a failed check.
+
+### Local state
+
+The default state directory is `.watchdog/`; use `--state-dir PATH` to choose
+another. It is ignored by Git. State written before 14 Nov 2026 uses older
+reference names and is rejected as an unsupported version; delete that
+directory and run `init` again.
 
 Before committing, check that tracked files contain only synthetic email
 addresses (reserved domains such as `example.invalid`). The check reports file
-and line only, never the address, and also runs as part of the test suite:
+and line only, never the address, and also runs in the test suite and in CI:
 
 ```text
 python scripts/check_synthetic_identifiers.py
 ```
-
-The default local state directory is `.watchdog/`; use `--state-dir PATH` to
-choose another location. Available offline fixtures are `baseline`,
-`unchanged`, `changed`, `disappeared`, `failed`, and `unverifiable`. The
-planned installed `watchdog` executable, live adapters, scheduling, and
-notifications remain deferred.
 
 ## Development
 
@@ -79,7 +103,7 @@ python3 -m venv .venv
 .venv/bin/python -m pip install pytest ruff mypy
 ```
 
-Run all Milestone 0 checks:
+Run all checks (the same ones CI runs):
 
 ```bash
 .venv/bin/python -m pytest

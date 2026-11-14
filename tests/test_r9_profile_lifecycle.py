@@ -27,7 +27,7 @@ def _add_profile(state_dir: Path, number: int = 1) -> str:
         value=value,
         purpose="lifecycle-test",
     )
-    assert result["subject_ref"] == f"r7-subject-{number:03d}"
+    assert result["subject_ref"] == f"profile-{number:03d}"
     return value
 
 
@@ -47,7 +47,7 @@ def test_reenable_requires_fresh_approval_and_preserves_history(
             "--fixture",
             "baseline",
             "--subject-ref",
-            "r7-subject-001",
+            "profile-001",
         )
         == 0
     )
@@ -55,13 +55,9 @@ def test_reenable_requires_fresh_approval_and_preserves_history(
     assert value not in scan_output
     history_before = (state_dir / "history.json").read_bytes()
 
-    assert (
-        _invoke(state_dir, "profile", "disable", "--subject-ref", "r7-subject-001") == 0
-    )
+    assert _invoke(state_dir, "profile", "disable", "--subject-ref", "profile-001") == 0
     capsys.readouterr()
-    assert (
-        _invoke(state_dir, "profile", "enable", "--subject-ref", "r7-subject-001") == 2
-    )
+    assert _invoke(state_dir, "profile", "enable", "--subject-ref", "profile-001") == 2
     assert "requires --confirm-ref matching --subject-ref" in capsys.readouterr().err
 
     assert (
@@ -70,13 +66,13 @@ def test_reenable_requires_fresh_approval_and_preserves_history(
             "profile",
             "enable",
             "--subject-ref",
-            "r7-subject-001",
+            "profile-001",
             "--confirm-ref",
-            "r7-subject-001",
+            "profile-001",
         )
         == 0
     )
-    assert capsys.readouterr().out == "PROFILE_ENABLED subject_ref=r7-subject-001\n"
+    assert capsys.readouterr().out == "PROFILE_ENABLED subject_ref=profile-001\n"
     assert (state_dir / "history.json").read_bytes() == history_before
 
     assert _invoke(state_dir, "profile", "list", "--json") == 0
@@ -99,7 +95,7 @@ def test_delete_requires_disabled_profile_and_confirmation(
             "--fixture",
             "baseline",
             "--subject-ref",
-            "r7-subject-001",
+            "profile-001",
         )
         == 0
     )
@@ -112,20 +108,16 @@ def test_delete_requires_disabled_profile_and_confirmation(
             "profile",
             "delete",
             "--subject-ref",
-            "r7-subject-001",
+            "profile-001",
             "--confirm",
         )
         == 2
     )
     assert "must be disabled before deletion" in capsys.readouterr().err
 
-    assert (
-        _invoke(state_dir, "profile", "disable", "--subject-ref", "r7-subject-001") == 0
-    )
+    assert _invoke(state_dir, "profile", "disable", "--subject-ref", "profile-001") == 0
     capsys.readouterr()
-    assert (
-        _invoke(state_dir, "profile", "delete", "--subject-ref", "r7-subject-001") == 2
-    )
+    assert _invoke(state_dir, "profile", "delete", "--subject-ref", "profile-001") == 2
     assert "requires explicit --confirm" in capsys.readouterr().err
 
     assert (
@@ -134,13 +126,13 @@ def test_delete_requires_disabled_profile_and_confirmation(
             "profile",
             "delete",
             "--subject-ref",
-            "r7-subject-001",
+            "profile-001",
             "--confirm",
         )
         == 0
     )
     assert capsys.readouterr().out == (
-        "PROFILE_REMOVED subject_ref=r7-subject-001 (not securely erased)\n"
+        "PROFILE_REMOVED subject_ref=profile-001 (not securely erased)\n"
     )
     assert (state_dir / "history.json").read_bytes() == history_before
     assert value not in (state_dir / profiles.PROFILE_FILE).read_text(encoding="utf-8")
@@ -154,18 +146,18 @@ def test_deleted_subject_reference_is_never_reused(
     state_dir = tmp_path / "state"
     _init(state_dir, capsys)
     _add_profile(state_dir, 1)
-    profiles.disable_profile(state_dir, "r7-subject-001")
-    profiles.delete_profile(state_dir, "r7-subject-001")
+    profiles.disable_profile(state_dir, "profile-001")
+    profiles.delete_profile(state_dir, "profile-001")
     result = profiles.add_profile(
         state_dir,
         kind="username",
         value="r9-user-002",
         purpose="lifecycle-test",
     )
-    assert result["subject_ref"] == "r7-subject-002"
+    assert result["subject_ref"] == "profile-002"
     assert _invoke(state_dir, "profile", "list", "--json") == 0
     assert json.loads(capsys.readouterr().out)["profiles"][0]["subject_ref"] == (
-        "r7-subject-002"
+        "profile-002"
     )
 
 
@@ -175,7 +167,7 @@ def test_interrupted_delete_keeps_previous_valid_profile_store(
     state_dir = tmp_path / "state"
     _init(state_dir, capsys)
     _add_profile(state_dir)
-    profiles.disable_profile(state_dir, "r7-subject-001")
+    profiles.disable_profile(state_dir, "profile-001")
     profile_path = state_dir / profiles.PROFILE_FILE
     before = profile_path.read_bytes()
     original_replace = Path.replace
@@ -187,7 +179,7 @@ def test_interrupted_delete_keeps_previous_valid_profile_store(
 
     monkeypatch.setattr(Path, "replace", fail_temporary_replace)
     with pytest.raises(profiles.ProfileError, match="cannot write local profiles"):
-        profiles.delete_profile(state_dir, "r7-subject-001")
+        profiles.delete_profile(state_dir, "profile-001")
 
     assert profile_path.read_bytes() == before
     assert not (state_dir / ".profiles.json.tmp").exists()

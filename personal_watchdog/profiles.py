@@ -11,7 +11,7 @@ from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any, Literal, cast
 
-PROFILE_VERSION = "r7-approved-identifiers/1"
+PROFILE_VERSION = "approved-identifiers/2"
 PROFILE_FILE = "profiles.json"
 MAX_PROFILES = 8
 MAX_SUBJECT_NUMBER = 999
@@ -20,7 +20,7 @@ MAX_SUBJECT_NUMBER = 999
 EXHAUSTED_SUBJECT_NUMBER = MAX_SUBJECT_NUMBER + 1
 MAX_VALUE_LENGTH = 128
 MAX_PURPOSE_LENGTH = 64
-SUBJECT_REF_PATTERN = re.compile(r"^r7-subject-[0-9]{3}$", re.ASCII)
+SUBJECT_REF_PATTERN = re.compile(r"^profile-[0-9]{3}$", re.ASCII)
 EMAIL_PATTERN = re.compile(r"^[^@\s]+@[^@\s]+$", re.ASCII)
 USERNAME_PATTERN = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._-]{0,127}$", re.ASCII)
 ProfileKind = Literal["email", "username"]
@@ -188,7 +188,7 @@ def add_profile(
     number = cast(int, profiles["next_subject_number"])
     if number > MAX_SUBJECT_NUMBER:
         raise ProfileError("local profile references are exhausted")
-    subject_ref = f"r7-subject-{number:03d}"
+    subject_ref = f"profile-{number:03d}"
     profile: dict[str, str | bool] = {
         "subject_ref": subject_ref,
         "kind": kind,

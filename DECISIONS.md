@@ -182,3 +182,19 @@ checks contribute no accepted observations; and aggregate outcomes are
   without altering stored history or R1/R2 semantics.
 - **Evidence that could change it:** A need for more than 999 references, a
   consumer of the old token, or a decision to add a hook or Actions workflow.
+
+## 2026-11-14 — Live path, naming, baseline, and record-keeping
+
+- **Status:** accepted by Peter (items 1–4 after R10); the no-match contract
+  remains open
+- **Decision:** (1) One live adapter, XposedOrNot check-email, gated by a
+  typed `--confirm-live` on every run, one request, no retry. (2) Stored
+  references and module names carry no experiment numbers; older synthetic
+  state is rejected, not migrated. (3) A scan's baseline is the last completed
+  scan of the same profile and source. (4) `BUILD_HISTORY.md` is the only
+  per-step record and `ROADMAP.md` holds the plan.
+- **Reasoning:** The remaining risk was in the unexercised live path; names
+  had to settle before real state exists; the old baseline rule lost changes
+  across a failed scan; four overlapping logs cost more than they recorded.
+- **Evidence that could change it:** the first real live result, in particular
+  the shape of the service's success and no-match responses.

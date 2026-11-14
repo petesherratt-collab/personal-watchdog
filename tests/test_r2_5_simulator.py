@@ -11,6 +11,7 @@ from unittest.mock import patch
 
 import pytest
 
+from personal_watchdog.comparison import SourceStatus
 from personal_watchdog.offline_simulator import (
     MAX_CANONICAL_SCOPE_ITEMS,
     MAX_CHECKS_PER_SCAN,
@@ -28,8 +29,7 @@ from personal_watchdog.offline_simulator import (
     main,
     run_scenario,
 )
-from personal_watchdog.r1 import SourceStatus
-from personal_watchdog.r2_adapter import normalize_response
+from personal_watchdog.response_normalizer import normalize_response
 from tests.fixtures_r2_5 import ROOT, read_scenario, run_cli, scenario_paths
 
 

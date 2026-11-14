@@ -10,13 +10,13 @@ from typing import Any, cast
 
 import pytest
 
-from personal_watchdog.r1 import (
+from personal_watchdog.comparison import (
     ComparisonKind,
     GuardKind,
     SourceStatus,
     compare_scans,
 )
-from personal_watchdog.r2_adapter import MAX_INPUT_BYTES
+from personal_watchdog.response_normalizer import MAX_INPUT_BYTES
 from personal_watchdog.xposedornot_check_email_adapter import (
     MAX_XON_BODY_BYTES,
     MAX_XON_HEADER_COUNT,

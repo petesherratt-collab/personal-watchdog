@@ -90,7 +90,7 @@ def test_removal_at_cap_frees_slot_with_fresh_reference(
     profiles.disable_profile(state_dir, refs[0])
     profiles.delete_profile(state_dir, refs[0])
     new_ref = _add(state_dir, "r10-user-extra")
-    assert new_ref == "r7-subject-009"
+    assert new_ref == "profile-009"
     assert new_ref not in refs
     stored = profiles.current_subject_refs(state_dir)
     assert refs[0] not in stored
@@ -106,7 +106,7 @@ def test_last_reference_is_issued_and_store_stays_loadable(
     state_dir = tmp_path / "state"
     _init(state_dir, capsys)
     _set_counter(state_dir, 999)
-    assert _add(state_dir, "r10-user-last") == "r7-subject-999"
+    assert _add(state_dir, "r10-user-last") == "profile-999"
     loaded = profiles.load_profiles(state_dir)
     assert loaded["next_subject_number"] == profiles.EXHAUSTED_SUBJECT_NUMBER
     assert _invoke(state_dir, "profile", "list") == 0
@@ -130,7 +130,7 @@ def test_exhausted_counter_refuses_add_before_write(
     profiles.load_profiles(state_dir)
     assert _invoke(state_dir, "profile", "list", "--json") == 0
     listed = json.loads(capsys.readouterr().out)["profiles"]
-    assert [item["subject_ref"] for item in listed] == ["r7-subject-999"]
+    assert [item["subject_ref"] for item in listed] == ["profile-999"]
 
 
 @pytest.mark.parametrize("value", [0, profiles.EXHAUSTED_SUBJECT_NUMBER + 1])
@@ -149,7 +149,7 @@ def test_counter_outside_bounds_still_fails_closed(
 
 @pytest.mark.parametrize(
     "confirmation",
-    [(), ("--confirm-ref", "r7-subject-002"), ("--confirm-ref", "r7-subject-01")],
+    [(), ("--confirm-ref", "profile-002"), ("--confirm-ref", "profile-01")],
 )
 def test_enable_without_matching_confirmation_changes_nothing(
     tmp_path: Path, capsys: pytest.CaptureFixture[str], confirmation: tuple[str, ...]
@@ -158,7 +158,7 @@ def test_enable_without_matching_confirmation_changes_nothing(
     _init(state_dir, capsys)
     _add(state_dir, "r10-user-001")
     _add(state_dir, "r10-user-002")
-    profiles.disable_profile(state_dir, "r7-subject-001")
+    profiles.disable_profile(state_dir, "profile-001")
     before = _profile_bytes(state_dir)
 
     assert (
@@ -167,7 +167,7 @@ def test_enable_without_matching_confirmation_changes_nothing(
             "profile",
             "enable",
             "--subject-ref",
-            "r7-subject-001",
+            "profile-001",
             *confirmation,
         )
         == 2
@@ -184,7 +184,7 @@ def test_bare_approve_flag_is_no_longer_accepted_for_enable(
     state_dir = tmp_path / "state"
     _init(state_dir, capsys)
     _add(state_dir, "r10-user-001")
-    profiles.disable_profile(state_dir, "r7-subject-001")
+    profiles.disable_profile(state_dir, "profile-001")
     before = _profile_bytes(state_dir)
     with pytest.raises(SystemExit):
         _invoke(
@@ -192,7 +192,7 @@ def test_bare_approve_flag_is_no_longer_accepted_for_enable(
             "profile",
             "enable",
             "--subject-ref",
-            "r7-subject-001",
+            "profile-001",
             "--approve",
         )
     capsys.readouterr()
@@ -209,29 +209,27 @@ def test_removal_output_states_no_secure_erasure(
     _init(state_dir, capsys)
     value = "r10-user-001"
     _add(state_dir, value)
-    profiles.disable_profile(state_dir, "r7-subject-001")
+    profiles.disable_profile(state_dir, "profile-001")
     assert (
         _invoke(
             state_dir,
             "profile",
             "delete",
             "--subject-ref",
-            "r7-subject-001",
+            "profile-001",
             "--confirm",
         )
         == 0
     )
     output = capsys.readouterr().out
-    assert (
-        output == "PROFILE_REMOVED subject_ref=r7-subject-001 (not securely erased)\n"
-    )
+    assert output == "PROFILE_REMOVED subject_ref=profile-001 (not securely erased)\n"
     assert value not in output
 
 
 def test_documents_describe_removal_without_erasure_claim() -> None:
     readme = " ".join((ROOT / "README.md").read_text(encoding="utf-8").split())
     privacy = " ".join((ROOT / "PRIVACY.md").read_text(encoding="utf-8").split())
-    assert "--confirm-ref r7-subject-001" in readme
+    assert "--confirm-ref profile-001" in readme
     assert "does not securely erase" in readme
     assert "does not securely erase" in privacy
 
@@ -246,17 +244,17 @@ def test_report_annotates_removed_profile_without_value_or_mutation(
     _init(state_dir, capsys)
     value = "r10-user-001"
     _add(state_dir, value)
-    _scan(state_dir, "r7-subject-001")
-    profiles.disable_profile(state_dir, "r7-subject-001")
-    profiles.delete_profile(state_dir, "r7-subject-001")
+    _scan(state_dir, "profile-001")
+    profiles.disable_profile(state_dir, "profile-001")
+    profiles.delete_profile(state_dir, "profile-001")
     capsys.readouterr()
     history_before = (state_dir / "history.json").read_bytes()
 
     assert _invoke(state_dir, "report", "--latest") == 0
     output = capsys.readouterr().out
-    assert "subject_ref=r7-subject-001" in output
+    assert "subject_ref=profile-001" in output
     assert output.endswith(
-        "PROFILE_NOTE subject_ref=r7-subject-001 profile since removed\n"
+        "PROFILE_NOTE subject_ref=profile-001 profile since removed\n"
     )
     assert value not in output
     assert (state_dir / "history.json").read_bytes() == history_before
@@ -276,9 +274,9 @@ def test_report_for_current_profile_has_no_annotation(
     state_dir = tmp_path / "state"
     _init(state_dir, capsys)
     _add(state_dir, "r10-user-001")
-    _scan(state_dir, "r7-subject-001")
+    _scan(state_dir, "profile-001")
     if disable:
-        profiles.disable_profile(state_dir, "r7-subject-001")
+        profiles.disable_profile(state_dir, "profile-001")
     capsys.readouterr()
     assert _invoke(state_dir, "report", "--latest") == 0
     assert "PROFILE_NOTE" not in capsys.readouterr().out
@@ -293,7 +291,7 @@ def test_report_for_default_subject_has_no_annotation(
     capsys.readouterr()
     assert _invoke(state_dir, "report", "--latest") == 0
     output = capsys.readouterr().out
-    assert "subject_ref=r6-subject-01" in output
+    assert "subject_ref=fixture-subject-01" in output
     assert "PROFILE_NOTE" not in output
 
 
@@ -303,12 +301,12 @@ def test_report_with_unreadable_profiles_does_not_claim_profile_is_live(
     state_dir = tmp_path / "state"
     _init(state_dir, capsys)
     _add(state_dir, "r10-user-001")
-    _scan(state_dir, "r7-subject-001")
+    _scan(state_dir, "profile-001")
     (state_dir / profiles.PROFILE_FILE).write_text("{", encoding="utf-8")
     capsys.readouterr()
     assert _invoke(state_dir, "report", "--latest") == 0
     assert capsys.readouterr().out.endswith(
-        "PROFILE_NOTE subject_ref=r7-subject-001 profile status unavailable\n"
+        "PROFILE_NOTE subject_ref=profile-001 profile status unavailable\n"
     )
 
 

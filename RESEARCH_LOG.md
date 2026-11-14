@@ -1785,3 +1785,8 @@ The publication guard reports file and line only.
 Typed confirmation is not proof of consent. Removal is not secure erasure. The
 guard covers email addresses in tracked files only. R1/R2 comparison,
 guarding, disappearance, and failure semantics are unchanged.
+
+## 2026-11-14 — Log closed
+
+This research log is closed and kept as an archive. From this date each step is
+recorded once, in `BUILD_HISTORY.md`; the plan lives in `ROADMAP.md`.

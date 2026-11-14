@@ -1046,3 +1046,8 @@ exhaustion guard, `--confirm-ref` re-enable, truthful removal wording,
 display-only removed-profile note, publication guard script, and stale R2.5/
 R3.5 header corrections on `ccr-058bcad3-37cjg1`. 321 tests, Ruff, mypy, and
 `git diff --check` pass. Not committed or pushed pending review.
+
+## 2026-11-14 — Log closed
+
+This progress log is closed and kept as an archive. From this date each step is
+recorded once, in `BUILD_HISTORY.md`; the plan lives in `ROADMAP.md`.
