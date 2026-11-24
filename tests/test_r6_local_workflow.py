@@ -55,14 +55,14 @@ def test_init_scan_report_and_history_round_trip(
 
     assert _invoke(tmp_path / "state", "report", "--latest", "--json") == 0
     report = json.loads(capsys.readouterr().out)
-    assert report["scan"]["scan_id"] == "r6-scan-002"
+    assert report["scan"]["scan_id"] == "scan-002"
     assert report["comparison"]["exposure_events"][0]["kind"] == ("exposure-changed")
 
     assert _invoke(tmp_path / "state", "history", "--json") == 0
     history = json.loads(capsys.readouterr().out)
     assert [item["scan"]["scan_id"] for item in history["scans"]] == [
-        "r6-scan-001",
-        "r6-scan-002",
+        "scan-001",
+        "scan-002",
     ]
 
     state_text = (tmp_path / "state" / "history.json").read_text(encoding="utf-8")

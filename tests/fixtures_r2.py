@@ -5,13 +5,13 @@ from __future__ import annotations
 import json
 from collections.abc import Mapping, Sequence
 
-from personal_watchdog.r1 import (
+from personal_watchdog.comparison import (
     DiagnosticMetadata,
     ScanAttempt,
     ScanPlan,
     SourceIdentity,
 )
-from personal_watchdog.r2_adapter import TrustedContext, normalize_response
+from personal_watchdog.response_normalizer import TrustedContext, normalize_response
 
 SOURCE_R2_A = SourceIdentity(
     source_id="synthetic-source-a",

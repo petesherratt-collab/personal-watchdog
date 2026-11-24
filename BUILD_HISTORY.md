@@ -2537,3 +2537,124 @@ not rewrite scan history or claim secure erasure.
   or identity ownership.
 - No real identifier, live request, credential, dependency, scheduler,
   notification, export, commit, push, or pull request was added.
+
+## 2026-11-13 — R10 Phase 2 lifecycle refinements and publication guard
+
+### Objective
+
+Implement the approved R10 refinements (§5 A–G and §13 of
+`RESEARCH_010_LIFECYCLE_REFINEMENTS_PUBLICATION_GUARD.md`) offline over
+synthetic profiles, without changing R1/R2 semantics.
+
+### Changes
+
+- `profiles.py`: refuse `add_profile` before writing once references are
+  exhausted; loader accepts counter 1000 as an exhausted marker; `enable_profile`
+  takes `confirm_ref`; added `current_subject_refs` and
+  `is_profile_subject_ref`.
+- `cli.py`: `profile enable --confirm-ref`; deletion prints
+  `PROFILE_REMOVED subject_ref=… (not securely erased)`; human `report` adds a
+  display-only `PROFILE_NOTE` for removed `r7-subject-NNN` references.
+- Added `scripts/check_synthetic_identifiers.py` and
+  `tests/test_r10_lifecycle_refinements.py`; updated R9 tests for the new
+  enable flag and removal token.
+- Updated `README.md` and `PRIVACY.md`; added the R10 research record;
+  corrected the stale R2.5 and R3.5 status headers with dated notes.
+
+### Verification
+
+- Baseline before changes: `67451e0`, clean, 288 passed.
+- Full suite after changes: 321 passed.
+- Ruff format and lint: passed. mypy: passed on 28 source files.
+- `git diff --check`: passed.
+- Guard over tracked files (and the two new untracked files checked
+  separately): passed.
+
+### Result
+
+All R10 acceptance cases pass. No stop criterion was triggered.
+
+### Gotchas
+
+- Fixing exhaustion required widening the loader's accepted counter range to
+  1000; without that, the §7 case “counter at 999, store loadable afterwards”
+  cannot hold.
+- The default subject `r6-subject-01` is not a profile reference and must not
+  be annotated as removed.
+- An unreadable profile store must not suppress the note silently, or the
+  report would imply the profile is live; it prints `profile status
+  unavailable` instead.
+- The guard's own tests must not contain a non-reserved address literally;
+  the probe address is built at runtime on the unassigned `.zz` domain.
+- The guard only sees files git tracks, so new files are checked only once
+  added.
+- Work was done on `ccr-058bcad3-37cjg1` (session constraint), not
+  `experiment/r10-lifecycle-refinements`.
+- No real identifier, live request, credential, dependency, scheduler,
+  notification, export, hook, or CI workflow was added.
+
+## 2026-11-14 — Live scan path, neutral names, CI, single record, roadmap
+
+### Objective
+
+Peter approved four follow-ups to R10: wire the XposedOrNot adapter into the
+workflow end to end, add CI, cut record-keeping to one entry per step, and
+remove experiment numbers from stored formats and module names; then take
+stock in a roadmap.
+
+### Changes
+
+- Renamed modules: `r1.py` → `comparison.py`, `r2_adapter.py` →
+  `response_normalizer.py`, `r4_bounded_live_xon_probe.py` →
+  `xon_live_probe.py`.
+- Renamed stored formats: profile references `profile-NNN`, default subject
+  `fixture-subject-01`, scan ids `scan-NNN`, versions `local-workflow/2` and
+  `approved-identifiers/2`. Older state is rejected as an unsupported version;
+  there is no migration because only synthetic state existed.
+- Added `xon_live.py`, the bounded single-request transport generalized from
+  the probe, which now wraps it. It also treats `http.client.HTTPException` as
+  a transport failure.
+- `TransportAttempt` gained an in-memory `request_email`, so the response is
+  matched against the address sent while `subject_ref` stays opaque. Without
+  it the adapter behaves as before.
+- `scan --adapter xposedornot --subject-ref REF --confirm-live REF`: email
+  profiles only, one request, a `LIVE_REQUEST` and a `TRANSPORT` line, and a
+  note when the check did not complete. Unreadable response metadata is
+  recorded as unverifiable.
+- The baseline is now the last completed scan of the same profile and source,
+  not simply the previous record.
+- Added `.github/workflows/ci.yml`, `ROADMAP.md`, and
+  `tests/test_live_xon_scan.py`; updated `README.md`, `PRIVACY.md`, and
+  `AGENTS.md`; closed `PROGRESS_LOG.md` and `RESEARCH_LOG.md`; marked the
+  itinerary superseded.
+
+### Verification
+
+- 347 tests passed (321 before). Ruff format/lint, mypy on 30 source files,
+  the synthetic-identifier guard, and `git diff --check` passed.
+- One live smoke run with a synthetic `example.invalid` address from the cloud
+  session: the session's network policy refused the connection, so nothing
+  reached the service. The scan was recorded as `failed`, not clean.
+
+### Result
+
+The live path is implemented and tested against mocked transport only. It has
+not been verified against the real service.
+
+### Gotchas
+
+- The adapter compared the response address with `subject_ref`, so using it
+  unchanged would have written the address into history.
+- The no-match response is still `unverifiable` by design; a clean address
+  cannot yet produce a completed result.
+- Before this change a failed scan between two completed scans erased the
+  comparison point, and a scan of one profile could be the baseline for
+  another (reported as not comparable).
+- A failure originally gave no reason; the `TRANSPORT` line was added after
+  the smoke run.
+- Transport exception text can contain the request URL, so it is never
+  printed or stored.
+- Golden outputs of the R2.5/R3.5 simulators keep their `r1`/`r2` keys; those
+  are frozen experiment artefacts and were not renamed.
+- No real identifier was used. No dependency, scheduler, or notification was
+  added.

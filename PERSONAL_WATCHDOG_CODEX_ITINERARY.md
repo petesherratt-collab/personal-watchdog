@@ -1,6 +1,11 @@
 # Personal Watchdog Codex itinerary
 
-Status: Milestone 0 complete; revised Milestone 1 proposal awaiting approval.
+Status: superseded on 2026-11-14 by `ROADMAP.md`. Kept as a historical record.
+The Milestone 1 ledger proposal below was never implemented; the project took
+the research-experiment path recorded in `BUILD_HISTORY.md` instead.
+
+Original status: Milestone 0 complete; revised Milestone 1 proposal awaiting
+approval.
 
 This itinerary is the approval boundary for Personal Watchdog work. It applies
 only to `/home/peters/personal-watchdog`. The repository at

@@ -7,9 +7,9 @@ from email.message import Message
 from urllib.error import URLError
 from urllib.request import Request
 
-from personal_watchdog import r4_bounded_live_xon_probe as probe
-from personal_watchdog.r1 import SourceStatus
-from personal_watchdog.r4_bounded_live_xon_probe import (
+from personal_watchdog import xon_live
+from personal_watchdog.comparison import SourceStatus
+from personal_watchdog.xon_live_probe import (
     PROBE_SUBJECT,
     PROBE_TIMEOUT_SECONDS,
     capture_attempt,
@@ -221,7 +221,7 @@ def test_redirect_response_is_not_retried_and_report_has_no_raw_body_or_url() ->
 
 
 def test_default_redirect_handler_rejects_redirects() -> None:
-    handler = probe._NoRedirectHandler()
+    handler = xon_live._NoRedirectHandler()
 
     assert (
         handler.redirect_request(None, None, 302, "", {}, "https://elsewhere.invalid")

@@ -2,7 +2,7 @@
 
 from collections.abc import Iterable
 
-from personal_watchdog.r1 import (
+from personal_watchdog.comparison import (
     DiagnosticMetadata,
     InvalidScanPlanError,
     Observation,
